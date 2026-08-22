@@ -1,0 +1,40 @@
+# Python & Backend
+backend/__pycache__/
+backend/*/__pycache__/
+backend/*/*/__pycache__/
+backend/*/*/*/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+backend/.pytest_cache/
+backend/.env
+*.db
+*.sqlite3
+
+# Flutter & Dart
+.dart_tool/
+labeltruth_app/.dart_tool/
+labeltruth_app/build/
+labeltruth_app/.flutter-plugins
+labeltruth_app/.flutter-plugins-dependencies
+labeltruth_app/.packages
+labeltruth_app/.pub-cache/
+labeltruth_app/.pub/
+labeltruth_app/ios/Pods/
+labeltruth_app/ios/.symlinks/
+labeltruth_app/ios/Flutter/Flutter.framework
+labeltruth_app/ios/Flutter/Flutter.podspec
+labeltruth_app/android/.gradle/
+labeltruth_app/android/local.properties
+labeltruth_app/android/app/debug/
+labeltruth_app/android/app/profile/
+labeltruth_app/android/app/release/
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo

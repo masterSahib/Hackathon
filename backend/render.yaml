@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: labeltruth-backend
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: labeltruth-postgres
+          property: connectionString
+      - key: AI_API_KEY
+        sync: false
+      - key: OPENROUTER_MODEL
+        value: nvidia/nemotron-3-ultra-550b-a55b:free
+      - key: OPENROUTER_VISION_MODEL
+        value: nvidia/nemotron-nano-12b-v2-vl:free
+      - key: OPENROUTER_FALLBACK_MODEL
+        value: google/gemini-2.5-flash
+
+databases:
+  - name: labeltruth-postgres
+    region: oregon
+    plan: free
+    databaseName: teamproject_stan
+    user: teamproject_stan_user
