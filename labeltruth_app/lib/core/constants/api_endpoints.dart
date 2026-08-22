@@ -1,11 +1,9 @@
 class ApiEndpoints {
-  // Default development backend URL
-  // On Windows Desktop / Web: http://127.0.0.1:8000
-  // On Android Emulator: http://10.0.2.2:8000
-  // On Physical Device / Production: Configured via Settings screen
-  static const String defaultBaseUrl = "http://127.0.0.1:8000/api/v1";
-  static const String androidEmulatorBaseUrl = "http://10.0.2.2:8000/api/v1";
+  // Live Render Production Backend URL
+  static const String defaultBaseUrl = "https://labeltruth-backend.onrender.com/api/v1";
   static const String productionBaseUrl = "https://labeltruth-backend.onrender.com/api/v1";
+  static const String localDesktopBaseUrl = "http://127.0.0.1:8000/api/v1";
+  static const String androidEmulatorBaseUrl = "http://10.0.2.2:8000/api/v1";
 
   // Endpoints
   static const String analyze = "/analyze";

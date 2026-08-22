@@ -218,8 +218,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ActionChip(
                         label: const Text("Localhost (Desktop/Web)", style: TextStyle(fontSize: 11)),
                         onPressed: () {
-                          _urlController.text = ApiEndpoints.defaultBaseUrl;
-                          settingsNotifier.updateBackendUrl(ApiEndpoints.defaultBaseUrl);
+                          _urlController.text = ApiEndpoints.localDesktopBaseUrl;
+                          settingsNotifier.updateBackendUrl(ApiEndpoints.localDesktopBaseUrl);
                         },
                       ),
                       ActionChip(
