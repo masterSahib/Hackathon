@@ -495,4 +495,25 @@ class ComplianceRuleEngine:
                 )
             ]
 
+    @classmethod
+    def evaluate_fssai_compliance(cls, extracted_data: Dict[str, Any], user_preferences: Dict[str, Any] = None) -> Dict[str, Any]:
+        engine = cls()
+        marketing = extracted_data.get("marketing_claims", [])
+        raw_ing = extracted_data.get("ingredients_raw") or extracted_data.get("raw_ingredients_text", "")
+        ing_list = extracted_data.get("ingredients_list", [])
+        if not ing_list and raw_ing:
+            ing_list = [{"name": p.strip()} for p in raw_ing.split(",") if p.strip()]
+        nutrition = extracted_data.get("nutrition_per_100g", {})
+        cat = extracted_data.get("category", "Packaged Food")
+        
+        return engine.evaluate_compliance(
+            marketing_claims=marketing,
+            ingredients_list=ing_list,
+            nutrition=nutrition,
+            raw_ingredients_text=raw_ing,
+            user_preferences=user_preferences,
+            product_category=cat
+        )
+
+RuleEngine = ComplianceRuleEngine
 rule_engine = ComplianceRuleEngine()

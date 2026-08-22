@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/constants/app_colors.dart';
 import '../models/scan_result.dart';
 import '../providers/scan_provider.dart';
+import '../services/tts_service.dart';
 import '../widgets/truth_gauge.dart';
 import '../widgets/claim_vs_reality_card.dart';
 import '../widgets/ingredient_tag_chip.dart';
@@ -21,6 +22,31 @@ class ResultScreen extends ConsumerStatefulWidget {
 
 class _ResultScreenState extends ConsumerState<ResultScreen> {
   bool _isGeneratingPdf = false;
+  bool _isSpeaking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    ttsService.init();
+  }
+
+  @override
+  void dispose() {
+    ttsService.stop();
+    super.dispose();
+  }
+
+  void _toggleAudioSpeech() async {
+    setState(() => _isSpeaking = !_isSpeaking);
+    if (_isSpeaking) {
+      await ttsService.speakAuditSummary(widget.result);
+      if (mounted) {
+        setState(() => _isSpeaking = false);
+      }
+    } else {
+      await ttsService.stop();
+    }
+  }
 
   void _handlePdfGeneration() async {
     setState(() => _isGeneratingPdf = true);
@@ -125,6 +151,14 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
         ),
         actions: [
           IconButton(
+            icon: Icon(
+              _isSpeaking ? Icons.volume_up_rounded : Icons.volume_mute_rounded,
+              color: _isSpeaking ? AppColors.accent : Colors.white,
+            ),
+            tooltip: _isSpeaking ? "Stop Audio" : "Listen to Audit Verdict",
+            onPressed: _toggleAudioSpeech,
+          ),
+          IconButton(
             icon: const Icon(Icons.share_outlined),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -201,6 +235,15 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _toggleAudioSpeech,
+        backgroundColor: _isSpeaking ? AppColors.criticalRed : AppColors.accent,
+        icon: Icon(_isSpeaking ? Icons.stop_rounded : Icons.record_voice_over_rounded, color: Colors.white),
+        label: Text(
+          _isSpeaking ? "Stop Audio" : "Listen to Verdict",
+          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white),
+        ),
+      ),
     );
   }
 
@@ -250,6 +293,40 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
               height: 1.4,
             ),
             textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 14),
+
+          // Audio Voice Assistant Trigger Chip
+          InkWell(
+            onTap: _toggleAudioSpeech,
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: _isSpeaking ? AppColors.criticalRed.withOpacity(0.15) : AppColors.accent.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: _isSpeaking ? AppColors.criticalRed : AppColors.accent),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _isSpeaking ? Icons.graphic_eq_rounded : Icons.volume_up_rounded,
+                    color: _isSpeaking ? AppColors.criticalRed : AppColors.accent,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _isSpeaking ? "Speaking Audit Summary..." : "Listen to Voice Summary",
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: _isSpeaking ? AppColors.criticalRed : AppColors.accent,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),

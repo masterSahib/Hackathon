@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/scan_provider.dart';
 import '../widgets/sample_product_sheet.dart';
+import 'barcode_scan_screen.dart';
 import 'result_screen.dart';
 
 class CaptureScreen extends ConsumerStatefulWidget {
@@ -102,8 +103,18 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> with SingleTicker
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.qr_code_scanner, color: AppColors.accent),
+            tooltip: "Scan Barcode",
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const BarcodeScanScreen()),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.science_outlined, color: AppColors.accent),
-            tooltip: "Load Sample Product",
+            tooltip: "Load Benchmarks",
             onPressed: () {
               showModalBottomSheet(
                 context: context,

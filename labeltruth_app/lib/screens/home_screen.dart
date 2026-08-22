@@ -6,6 +6,7 @@ import '../models/scan_result.dart';
 import '../providers/scan_provider.dart';
 import '../widgets/sample_product_sheet.dart';
 import 'capture_screen.dart';
+import 'barcode_scan_screen.dart';
 import 'result_screen.dart';
 import 'history_screen.dart';
 import 'settings_screen.dart';
@@ -38,6 +39,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         context,
         MaterialPageRoute(builder: (_) => ResultScreen(result: res)),
       );
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.surfaceCardDark,
+            content: Text("Barcode '$query' not found in registry. Try dual-camera snap."),
+            action: SnackBarAction(
+              label: "Dual Snap",
+              textColor: AppColors.accent,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CaptureScreen()),
+                );
+              },
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -84,8 +104,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.qr_code_scanner, color: AppColors.accent),
+            tooltip: "Scan Barcode",
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const BarcodeScanScreen()),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.science_outlined, color: AppColors.accent),
-            tooltip: "Test Sample Products",
+            tooltip: "Test Benchmarks",
             onPressed: () {
               showModalBottomSheet(
                 context: context,
@@ -107,7 +137,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ],
       ),
       body: scanState.isLoading
-          ? _buildLoadingOverlay(scanState.loadingMessage ?? "Analyzing...")
+          ? _buildLoadingOverlay(scanState.loadingMessage ?? "Auditing Product...")
           : RefreshIndicator(
               onRefresh: () async {
                 await ref.read(scanProvider.notifier).loadRecentScans();
@@ -124,10 +154,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                     // Search / Barcode Bar
                     _buildSearchBar(),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
 
-                    // Quick Sample Tester Row
-                    _buildSampleTesterBanner(context),
+                    // Quick Actions Row (Dual-Cam, Barcode Scanner, Benchmarks)
+                    _buildQuickActionCards(context),
                     const SizedBox(height: 24),
 
                     // Recent Scans Header
@@ -189,20 +219,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           } else if (index == 2) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const HistoryScreen()),
+              MaterialPageRoute(builder: (_) => const BarcodeScanScreen()),
             );
           } else if (index == 3) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              MaterialPageRoute(builder: (_) => const HistoryScreen()),
             );
           }
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.document_scanner_rounded), label: "Dual Scan"),
+          BottomNavigationBarItem(icon: Icon(Icons.flip_camera_ios_rounded), label: "Dual Scan"),
+          BottomNavigationBarItem(icon: Icon(Icons.qr_code_scanner_rounded), label: "Barcode"),
           BottomNavigationBarItem(icon: Icon(Icons.history_rounded), label: "History"),
-          BottomNavigationBarItem(icon: Icon(Icons.tune_rounded), label: "Alerts"),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -243,7 +273,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            "Extracting claims & cross-checking FSSAI regulations...",
+            "Querying FSSAI regulations & Open Food Facts...",
             style: GoogleFonts.inter(
               fontSize: 12,
               color: AppColors.textMutedDark,
@@ -300,7 +330,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const SizedBox(height: 10),
           Text(
-            "Detect Misleading\nFood Packaging Claims",
+            "Expose Misleading\nFood Packaging Claims",
             style: GoogleFonts.poppins(
               fontSize: 20,
               fontWeight: FontWeight.w800,
@@ -310,7 +340,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            "Snap Front Marketing vs. Back Ingredients to expose hidden sugars, palm oils & maida hierarchy.",
+            "Cross-examine marketing slogans with real back-panel ingredients & Indian FSSAI standards.",
             style: GoogleFonts.inter(
               fontSize: 12,
               color: const Color(0xFFD1FAE5),
@@ -318,15 +348,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const CaptureScreen()),
-              );
-            },
-            icon: const Icon(Icons.flip_camera_ios_rounded, size: 18),
-            label: const Text("Start Dual-Pack Scan"),
+          Row(
+            children: [
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CaptureScreen()),
+                  );
+                },
+                icon: const Icon(Icons.flip_camera_ios_rounded, size: 16),
+                label: const Text("Dual-Pack Scan"),
+              ),
+              const SizedBox(width: 10),
+              OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const BarcodeScanScreen()),
+                  );
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: AppColors.accent),
+                ),
+                icon: const Icon(Icons.qr_code_scanner, size: 16, color: AppColors.accent),
+                label: const Text("Scan Barcode"),
+              ),
+            ],
           ),
         ],
       ),
@@ -344,8 +393,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         controller: _searchController,
         style: GoogleFonts.inter(color: AppColors.textPrimaryDark, fontSize: 13),
         decoration: InputDecoration(
-          hintText: "Enter Barcode (e.g. 8901030882101) or Brand...",
-          prefixIcon: const Icon(Icons.qr_code_scanner_rounded, color: AppColors.accent),
+          hintText: "Enter Indian Barcode (e.g. 8901030882101)...",
+          prefixIcon: IconButton(
+            icon: const Icon(Icons.qr_code_scanner_rounded, color: AppColors.accent),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const BarcodeScanScreen()),
+              );
+            },
+          ),
           suffixIcon: IconButton(
             icon: const Icon(Icons.search_rounded, color: AppColors.textSecondaryDark),
             onPressed: _handleBarcodeSearch,
@@ -358,62 +415,107 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildSampleTesterBanner(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => const SampleProductSheet(),
-        );
-      },
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceCardDark,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.accent.withOpacity(0.35), width: 1),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
+  Widget _buildQuickActionCards(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const BarcodeScanScreen()),
+              );
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.accent.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(10),
+                color: AppColors.surfaceCardDark,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.surfaceLightDark, width: 0.8),
               ),
-              child: const Icon(Icons.auto_awesome, color: AppColors.accent, size: 22),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Text(
-                    "Try Benchmark Test Products",
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimaryDark,
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
                     ),
+                    child: const Icon(Icons.qr_code_scanner, color: AppColors.accent, size: 20),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    "Digestive biscuits, protein bars, real fruit juices & clean oats",
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      color: AppColors.textSecondaryDark,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Scan Barcode",
+                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700),
+                        ),
+                        Text(
+                          "Live Registry",
+                          style: GoogleFonts.inter(fontSize: 10, color: AppColors.textMutedDark),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: AppColors.textMutedDark),
-          ],
+          ),
         ),
-      ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: InkWell(
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (_) => const SampleProductSheet(),
+              );
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceCardDark,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.surfaceLightDark, width: 0.8),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.warningAmber.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.science_outlined, color: AppColors.warningAmber, size: 20),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Benchmarks",
+                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700),
+                        ),
+                        Text(
+                          "FSSAI Tests",
+                          style: GoogleFonts.inter(fontSize: 10, color: AppColors.textMutedDark),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -435,7 +537,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
             ),
             Text(
-              "Scan a food package to see the Truth Score & FSSAI violations here.",
+              "Scan a food package or barcode to see the Truth Score & FSSAI violations here.",
               style: GoogleFonts.inter(fontSize: 11, color: AppColors.textMutedDark),
               textAlign: TextAlign.center,
             ),
