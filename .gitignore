@@ -26,6 +26,7 @@ labeltruth_app/ios/.symlinks/
 labeltruth_app/ios/Flutter/Flutter.framework
 labeltruth_app/ios/Flutter/Flutter.podspec
 labeltruth_app/android/.gradle/
+labeltruth_app/android/.kotlin/
 labeltruth_app/android/local.properties
 labeltruth_app/android/app/debug/
 labeltruth_app/android/app/profile/
