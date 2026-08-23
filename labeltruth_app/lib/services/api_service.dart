@@ -148,4 +148,48 @@ class ApiService {
       throw Exception("Unable to generate PDF notice: $e");
     }
   }
+
+  /// Ask Custom Question to AI Regulatory Auditor about scanned product
+  Future<String> askProductChat({
+    required String productName,
+    String? brandName,
+    int? truthScore,
+    String? verdict,
+    List<String>? marketingClaims,
+    String? ingredientsText,
+    Map<String, dynamic>? nutrition,
+    List<Map<String, dynamic>>? violations,
+    required String userQuestion,
+    List<Map<String, String>>? chatHistory,
+  }) async {
+    try {
+      final payload = {
+        'product_name': productName,
+        'brand_name': brandName ?? 'Brand',
+        'truth_score': truthScore ?? 50,
+        'verdict': verdict ?? 'Misleading',
+        'marketing_claims': marketingClaims ?? [],
+        'ingredients_text': ingredientsText ?? '',
+        'nutrition': nutrition ?? {},
+        'violations': violations ?? [],
+        'user_question': userQuestion,
+        'chat_history': chatHistory ?? [],
+      };
+
+      final response = await _dio.post(
+        ApiEndpoints.productChat,
+        data: payload,
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        return response.data['reply'] as String;
+      }
+      throw Exception("AI chat failed to respond");
+    } on DioException catch (e) {
+      final msg = e.response?.data?['detail'] ?? e.message ?? "Failed to connect to AI Assistant";
+      throw Exception(msg);
+    } catch (e) {
+      throw Exception("AI Chat Error: $e");
+    }
+  }
 }

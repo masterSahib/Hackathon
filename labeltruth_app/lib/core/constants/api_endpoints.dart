@@ -16,4 +16,5 @@ class ApiEndpoints {
   static const String downloadPdf = "/report/download";
   static const String rules = "/rules/";
   static const String userProfile = "/users/me";
+  static const String productChat = "/chat/product";
 }

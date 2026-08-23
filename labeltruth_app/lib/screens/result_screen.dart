@@ -10,6 +10,7 @@ import '../widgets/claim_vs_reality_card.dart';
 import '../widgets/ingredient_tag_chip.dart';
 import '../widgets/violation_card.dart';
 import '../widgets/nutrition_breakdown_card.dart';
+import 'product_chat_screen.dart';
 
 class ResultScreen extends ConsumerStatefulWidget {
   final ScanResult result;
@@ -151,6 +152,16 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.forum_outlined, color: AppColors.accent),
+            tooltip: "Ask Food Safety AI",
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => ProductChatScreen(scanResult: r)),
+              );
+            },
+          ),
+          IconButton(
             icon: Icon(
               _isSpeaking ? Icons.volume_up_rounded : Icons.volume_mute_rounded,
               color: _isSpeaking ? AppColors.accent : Colors.white,
@@ -175,6 +186,59 @@ class _ResultScreenState extends ConsumerState<ResultScreen> {
           children: [
             // 1. Top Section: Truth Score Gauge Card
             _buildTruthScoreCard(r, scoreColor),
+            const SizedBox(height: 16),
+
+            // AI Chat Banner Button
+            InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => ProductChatScreen(scanResult: r)),
+                );
+              },
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF0F172A), Color(0xFF064E3B)],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.accent.withOpacity(0.5)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.auto_awesome, color: AppColors.accent, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Have Questions About This Product?",
+                            style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white),
+                          ),
+                          Text(
+                            "Chat with our FSSAI Regulatory AI Auditor",
+                            style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFFD1FAE5)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.accent, size: 14),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: 16),
 
             // 2. Dietary Warnings (if any)

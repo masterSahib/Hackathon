@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/constants/app_colors.dart';
 import '../models/scan_result.dart';
 import '../providers/scan_provider.dart';
-import '../widgets/sample_product_sheet.dart';
 import 'capture_screen.dart';
 import 'barcode_scan_screen.dart';
 import 'result_screen.dart';
@@ -110,18 +109,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const BarcodeScanScreen()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.science_outlined, color: AppColors.accent),
-            tooltip: "Test Benchmarks",
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (_) => const SampleProductSheet(),
               );
             },
           ),
@@ -439,7 +426,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const BarcodeScanScreen()),
+                MaterialPageRoute(builder: (_) => const CaptureScreen()),
               );
             },
             borderRadius: BorderRadius.circular(12),
@@ -458,7 +445,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       color: AppColors.accent.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.qr_code_scanner, color: AppColors.accent, size: 20),
+                    child: const Icon(Icons.flip_camera_ios_rounded, color: AppColors.accent, size: 20),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -466,11 +453,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Scan Barcode",
+                          "Dual-Pack Cam",
                           style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700),
                         ),
                         Text(
-                          "Live Registry",
+                          "Vision AI Scan",
                           style: GoogleFonts.inter(fontSize: 10, color: AppColors.textMutedDark),
                         ),
                       ],
@@ -485,11 +472,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         Expanded(
           child: InkWell(
             onTap: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (_) => const SampleProductSheet(),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const BarcodeScanScreen()),
               );
             },
             borderRadius: BorderRadius.circular(12),
@@ -508,7 +493,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       color: AppColors.warningAmber.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.science_outlined, color: AppColors.warningAmber, size: 20),
+                    child: const Icon(Icons.qr_code_scanner_rounded, color: AppColors.warningAmber, size: 20),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -516,11 +501,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Benchmarks",
+                          "Scan Barcode",
                           style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700),
                         ),
                         Text(
-                          "FSSAI Tests",
+                          "Live Registry",
                           style: GoogleFonts.inter(fontSize: 10, color: AppColors.textMutedDark),
                         ),
                       ],
@@ -574,21 +559,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           return InkWell(
             onTap: () async {
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => const Center(
+                  child: CircularProgressIndicator(color: AppColors.accent),
+                ),
+              );
+
               final scanNotifier = ref.read(scanProvider.notifier);
               final res = await scanNotifier.loadScanById(item.id, productId: item.productId);
-              if (res != null && context.mounted) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => ResultScreen(result: res)),
-                );
-              } else if (context.mounted) {
-                final error = ref.read(scanProvider).errorMessage ?? "Unable to load audit report. Please scan again.";
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(error),
-                    backgroundColor: AppColors.criticalRed,
-                  ),
-                );
+
+              if (context.mounted) {
+                Navigator.of(context, rootNavigator: true).pop(); // dismiss loading dialog
+                if (res != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => ResultScreen(result: res)),
+                  );
+                } else {
+                  final error = ref.read(scanProvider).errorMessage ?? "Unable to load audit report. Please scan again.";
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(error),
+                      backgroundColor: AppColors.criticalRed,
+                    ),
+                  );
+                }
               }
             },
             borderRadius: BorderRadius.circular(14),

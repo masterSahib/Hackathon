@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../core/constants/app_colors.dart';
 import '../providers/scan_provider.dart';
-import '../widgets/sample_product_sheet.dart';
 import 'barcode_scan_screen.dart';
 import 'result_screen.dart';
 
@@ -109,18 +108,6 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> with SingleTicker
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const BarcodeScanScreen()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.science_outlined, color: AppColors.accent),
-            tooltip: "Load Benchmarks",
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (_) => const SampleProductSheet(),
               );
             },
           ),
@@ -272,19 +259,19 @@ class _CaptureScreenState extends ConsumerState<CaptureScreen> with SingleTicker
             width: double.infinity,
             height: 52,
             child: ElevatedButton.icon(
-              onPressed: (_frontBytes != null || _backBytes != null) ? _runAnalysis : () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (_) => const SampleProductSheet(),
-                );
-              },
+              onPressed: (_frontBytes != null || _backBytes != null)
+                  ? _runAnalysis
+                  : () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Please snap the Front or Back packaging photo first."),
+                          backgroundColor: AppColors.warningAmber,
+                        ),
+                      );
+                    },
               icon: const Icon(Icons.bolt_rounded),
               label: Text(
-                (_frontBytes != null || _backBytes != null)
-                    ? "Audit Packaging Claims"
-                    : "Pick Test Benchmark / Snap Photos",
+                "Audit Packaging with Vision AI",
                 style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700),
               ),
             ),

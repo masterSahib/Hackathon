@@ -126,13 +126,33 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
 
                         return InkWell(
                           onTap: () async {
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (_) => const Center(
+                                child: CircularProgressIndicator(color: AppColors.accent),
+                              ),
+                            );
+
                             final scanNotifier = ref.read(scanProvider.notifier);
-                            final res = await scanNotifier.loadScanById(item.id);
-                            if (res != null && context.mounted) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => ResultScreen(result: res)),
-                              );
+                            final res = await scanNotifier.loadScanById(item.id, productId: item.productId);
+
+                            if (context.mounted) {
+                              Navigator.of(context, rootNavigator: true).pop();
+                              if (res != null) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => ResultScreen(result: res)),
+                                );
+                              } else {
+                                final error = ref.read(scanProvider).errorMessage ?? "Unable to load audit report.";
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(error),
+                                    backgroundColor: AppColors.criticalRed,
+                                  ),
+                                );
+                              }
                             }
                           },
                           borderRadius: BorderRadius.circular(14),
