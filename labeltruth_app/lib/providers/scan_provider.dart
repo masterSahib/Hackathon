@@ -152,23 +152,40 @@ class ScanNotifier extends StateNotifier<ScanState> {
     }
   }
 
-  Future<ScanResult?> loadScanById(String scanId) async {
+  Future<ScanResult?> loadScanById(String scanId, {String? barcode, String? productId}) async {
     state = state.copyWith(
       isLoading: true,
       loadingMessage: "Retrieving audit report...",
+      errorMessage: null,
     );
 
     try {
-      final result = await _apiService.getScanReport(scanId);
-      state = state.copyWith(
-        isLoading: false,
-        currentResult: result,
-      );
-      return result;
+      final settings = _ref.read(settingsProvider);
+      _apiService.updateBaseUrl(settings.backendUrl);
+
+      ScanResult? result;
+      try {
+        result = await _apiService.getScanReport(scanId);
+      } catch (_) {
+        if (barcode != null && barcode.isNotEmpty) {
+          result = await _apiService.lookupBarcode(barcode);
+        } else if (productId != null && productId.isNotEmpty) {
+          result = await _apiService.getScanReport(productId);
+        }
+      }
+
+      if (result != null) {
+        state = state.copyWith(
+          isLoading: false,
+          currentResult: result,
+        );
+        return result;
+      }
+      throw Exception("Audit report not found");
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: "Unable to load scan report",
+        errorMessage: "Unable to load scan report: $e",
       );
       return null;
     }

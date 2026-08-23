@@ -350,30 +350,46 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           const SizedBox(height: 16),
           Row(
             children: [
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const CaptureScreen()),
-                  );
-                },
-                icon: const Icon(Icons.flip_camera_ios_rounded, size: 16),
-                label: const Text("Dual-Pack Scan"),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const CaptureScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.flip_camera_ios_rounded, size: 16),
+                  label: const Text(
+                    "Dual-Pack Scan",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                  ),
+                ),
               ),
               const SizedBox(width: 10),
-              OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const BarcodeScanScreen()),
-                  );
-                },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: const BorderSide(color: AppColors.accent),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const BarcodeScanScreen()),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: AppColors.accent),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                  ),
+                  icon: const Icon(Icons.qr_code_scanner, size: 16, color: AppColors.accent),
+                  label: const Text(
+                    "Scan Barcode",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                icon: const Icon(Icons.qr_code_scanner, size: 16, color: AppColors.accent),
-                label: const Text("Scan Barcode"),
               ),
             ],
           ),
@@ -559,11 +575,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           return InkWell(
             onTap: () async {
               final scanNotifier = ref.read(scanProvider.notifier);
-              final res = await scanNotifier.loadScanById(item.id);
+              final res = await scanNotifier.loadScanById(item.id, productId: item.productId);
               if (res != null && context.mounted) {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => ResultScreen(result: res)),
+                );
+              } else if (context.mounted) {
+                final error = ref.read(scanProvider).errorMessage ?? "Unable to load audit report. Please scan again.";
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(error),
+                    backgroundColor: AppColors.criticalRed,
+                  ),
                 );
               }
             },
