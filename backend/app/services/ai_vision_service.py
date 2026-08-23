@@ -4,43 +4,43 @@ import httpx
 from typing import Dict, Any, Optional, List
 from app.core.config import settings
 
-EXTRACTION_SYSTEM_PROMPT = """You are an expert Food Labeling Compliance Auditor and Regulatory Vision AI specializing in FSSAI, FDA, and Codex Alimentarius standards.
-Analyze the provided front-of-pack and back-of-pack food packaging images/text.
+EXTRACTION_SYSTEM_PROMPT = """You are an expert Food Labeling Compliance Auditor and Regulatory Vision AI specializing in Indian FSSAI, FDA, and Codex Alimentarius standards.
+Analyze the provided front-of-pack and back-of-pack food packaging images or transcribed text.
 
 Extract and return STRICTLY a valid JSON object matching the following structure without markdown formatting or introductory text:
 {
-  "brand_name": "Extracted Brand Name",
-  "product_name": "Extracted Product Name",
-  "category": "e.g., Biscuits / Cereal / Beverage / Protein Bar / Snack",
+  "brand_name": "Extracted Brand Name (e.g. Lay's / Haldiram's / Britannia / Amul)",
+  "product_name": "Extracted Product Name (e.g. Lemon Potato Chips / Digestive Biscuits)",
+  "category": "e.g., Potato Chips / Savory Snack / Biscuit / Beverage / Noodle",
   "marketing_claims": [
-    "List of front-of-pack claims, e.g., 'Zero Added Sugar', '100% Whole Wheat', 'Rich in Protein', 'Real Fruit Juice', 'No Preservatives'"
+    "List of all front-of-pack claims, slogans, badges, and marketing promises, e.g. 'Tangy Lemon & Chili', 'Made with Real Potatoes', 'Zero Trans Fat', 'Zero Cholesterol', '100% Whole Wheat', 'No Added Sugar', 'Rich in Protein'"
   ],
   "ingredients_list": [
-    {"name": "Refined Wheat Flour (Maida)", "percentage": 65.0, "is_additive": false},
-    {"name": "Sugar", "percentage": null, "is_additive": false},
-    {"name": "Palm Oil", "percentage": null, "is_additive": false},
-    {"name": "Maltodextrin", "percentage": null, "is_additive": true, "ins_code": null},
-    {"name": "Caramel Color (INS 150d)", "percentage": null, "is_additive": true, "ins_code": "INS 150d"}
+    {"name": "Potato", "percentage": 52.0, "is_additive": false},
+    {"name": "Edible Vegetable Oil (Palmolein)", "percentage": null, "is_additive": false},
+    {"name": "Seasoning (Spices, Salt, Sugar)", "percentage": null, "is_additive": false},
+    {"name": "Acidity Regulator (INS 330)", "percentage": null, "is_additive": true, "ins_code": "INS 330"},
+    {"name": "Flavour Enhancers (INS 627, INS 631)", "percentage": null, "is_additive": true, "ins_code": "INS 627"}
   ],
-  "raw_ingredients_text": "Complete transcribed ingredients string",
+  "raw_ingredients_text": "Complete verbatim transcribed ingredients list string from the back panel",
   "nutrition_per_100g": {
-    "energy_kcal": 450.0,
+    "energy_kcal": 540.0,
     "protein_g": 6.5,
-    "total_carbohydrates_g": 68.0,
-    "total_sugar_g": 24.0,
-    "added_sugar_g": 20.0,
-    "total_fat_g": 18.0,
-    "saturated_fat_g": 9.0,
-    "trans_fat_g": 0.1,
-    "sodium_mg": 450.0,
+    "total_carbohydrates_g": 52.0,
+    "total_sugar_g": 3.0,
+    "added_sugar_g": 2.0,
+    "total_fat_g": 34.0,
+    "saturated_fat_g": 14.0,
+    "trans_fat_g": 0.05,
+    "sodium_mg": 780.0,
     "fiber_g": 2.5
   },
   "suspicious_additives": [
     {
-      "name": "Caramel Color IV",
-      "code": "INS 150d",
-      "category": "Synthetic Color",
-      "concern": "Contains 4-MEI contaminant associated with carcinogenicity",
+      "name": "Disodium 5'-Guanylate",
+      "code": "INS 627",
+      "category": "Synthetic Flavor Enhancer",
+      "concern": "Purine additive used to trigger hyper-palatable addictive snacking",
       "severity": "Medium"
     }
   ]

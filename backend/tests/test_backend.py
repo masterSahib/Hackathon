@@ -122,3 +122,40 @@ async def test_pdf_generation():
         data = res.json()
         assert data["success"] is True
         assert len(data["pdf_base64"]) > 1000
+
+def test_potato_chips_lemon_fssai_audit():
+    claims = ["Tangy Lemon Potato Chips", "Zero Trans Fat", "Crispy & Crunchy"]
+    ingredients = [
+        {"name": "Potato", "percentage": 52.0},
+        {"name": "Edible Vegetable Oil (Palmolein)"},
+        {"name": "Seasoning (Salt, Spices, Sugar)"},
+        {"name": "Acidity Regulator (INS 330)"},
+        {"name": "Flavour Enhancers (INS 627, INS 631)"},
+        {"name": "Nature Identical Flavouring Substances"}
+    ]
+    nutrition = {
+        "energy_kcal": 550.0,
+        "protein_g": 6.0,
+        "total_fat_g": 35.0,
+        "saturated_fat_g": 14.5,
+        "trans_fat_g": 0.05,
+        "sodium_mg": 820.0,
+        "total_sugar_g": 3.0,
+    }
+    raw_text = "Potato (52%), Edible Vegetable Oil (Palmolein), Seasoning (Spices, Salt, Sugar, Acidity Regulator (INS 330), Flavour Enhancers (INS 627, INS 631), Nature Identical Flavouring Substances)"
+
+    result = rule_engine.evaluate_compliance(
+        marketing_claims=claims,
+        ingredients_list=ingredients,
+        nutrition=nutrition,
+        raw_ingredients_text=raw_text,
+        product_category="Potato Chips"
+    )
+
+    assert result["truth_score"] <= 50
+    viol_codes = [v.rule_code for v in result["violations"]]
+    assert "RULE_F_HFSS_SODIUM_HAZARD" in viol_codes
+    assert "RULE_F_HFSS_SATURATED_FAT_HAZARD" in viol_codes
+    assert "RULE_D_PALM_OIL_MASKING" in viol_codes
+    assert len(result["claim_comparisons"]) >= 3
+    assert len(result["healthier_alternatives"]) >= 1

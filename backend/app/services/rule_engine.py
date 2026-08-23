@@ -16,12 +16,14 @@ class ComplianceRuleEngine:
         "maltodextrin", "high fructose corn syrup", "hfcs", "invert sugar", "invert syrup",
         "invert sugar syrup", "fruit juice concentrate", "dextrose", "sucrose", "liquid glucose",
         "glucose syrup", "golden syrup", "corn syrup", "corn syrup solids", "barley malt extract",
-        "malt extract", "agave nectar", "molasses", "brown rice syrup", "polydextrose", "maltose"
+        "malt extract", "agave nectar", "molasses", "brown rice syrup", "polydextrose", "maltose",
+        "caramelised sugar", "sugar"
     ]
 
     PALM_OIL_VARIANTS = [
         "palm oil", "palmolein", "refined palm oil", "palm kernel oil", "fractionated palm oil",
-        "rpo", "edible vegetable oil (palm)", "hydrogenated palm oil", "palm olein"
+        "rpo", "edible vegetable oil (palm)", "hydrogenated palm oil", "palm olein",
+        "edible vegetable oil (palmolein)"
     ]
 
     GENERIC_VEG_OIL_REGEX = r'(?<![a-zA-Z])(?:refined\s+)?edible\s+vegetable\s+oil(?!\s*\([^)]+\))'
@@ -30,23 +32,23 @@ class ComplianceRuleEngine:
         "INS 150D": {
             "name": "Caramel Color IV (Ammonia Sulphite Process)",
             "category": "Synthetic Color",
-            "concern": "Contains 4-MEI byproduct; flagged in international studies for potential toxicity under high exposure.",
+            "concern": "Contains 4-MEI byproduct; flagged in international toxicology studies for carcinogenicity under chronic exposure.",
             "severity": "Medium",
             "penalty": 10
         },
         "INS 102": {
             "name": "Tartrazine (Yellow #5)",
             "category": "Synthetic Azo Dye",
-            "concern": "Linked to hyperactivity in children; requires mandatory warning labels in EU.",
+            "concern": "Linked to hyperactivity in children; requires mandatory statutory warning labels in the European Union.",
             "severity": "High",
             "penalty": 15
         },
         "INS 110": {
             "name": "Sunset Yellow FCF",
             "category": "Synthetic Azo Dye",
-            "concern": "Artificial food coloring linked to allergen sensitivity and restlessness.",
-            "severity": "Medium",
-            "penalty": 10
+            "concern": "Associated with allergic reactions, hives, and hyperactivity in sensitive individuals.",
+            "severity": "High",
+            "penalty": 15
         },
         "INS 129": {
             "name": "Allura Red AC",
@@ -58,42 +60,70 @@ class ComplianceRuleEngine:
         "INS 950": {
             "name": "Acesulfame Potassium (Ace-K)",
             "category": "Artificial Sweetener",
-            "concern": "High-intensity chemical sweetener with ongoing microbiome and metabolic scrutiny.",
+            "concern": "High-intensity chemical sweetener with ongoing microbiome and metabolic disruption concerns.",
             "severity": "Medium",
             "penalty": 10
         },
         "INS 951": {
             "name": "Aspartame",
             "category": "Artificial Sweetener",
-            "concern": "Artificial sweetener requiring specific phenylketonuria health warnings.",
+            "concern": "Artificial sweetener requiring specific statutory phenylketonuria health warnings.",
             "severity": "High",
             "penalty": 15
         },
         "INS 955": {
             "name": "Sucralose",
             "category": "Artificial Sweetener",
-            "concern": "Chlorinated artificial sweetener commonly masked in 'zero sugar' fitness foods.",
+            "concern": "Chlorinated synthetic sweetener commonly disguised in 'zero sugar' diet products.",
             "severity": "Medium",
             "penalty": 10
         },
         "INS 621": {
             "name": "Monosodium Glutamate (MSG)",
             "category": "Flavor Enhancer",
-            "concern": "Synthetic glutamate additive used to mask low-quality base ingredients.",
+            "concern": "Synthetic glutamate additive used to mask low-quality base ingredients and induce hyper-palatability.",
+            "severity": "Low",
+            "penalty": 5
+        },
+        "INS 627": {
+            "name": "Disodium 5'-Guanylate",
+            "category": "Synthetic Flavor Enhancer",
+            "concern": "Purine nucleotide additive that synergistically intensifies salty/umami notes to trigger addictive over-snacking.",
+            "severity": "Medium",
+            "penalty": 10
+        },
+        "INS 631": {
+            "name": "Disodium 5'-Inosinate",
+            "category": "Synthetic Flavor Enhancer",
+            "concern": "Chemically prepared flavour booster commonly combined with MSG and high sodium.",
+            "severity": "Medium",
+            "penalty": 10
+        },
+        "INS 330": {
+            "name": "Citric Acid (Synthetic Acidity Regulator)",
+            "category": "Acidity Regulator / Flavouring",
+            "concern": "Industrial ferment used to fake natural fruit/lemon acidity without real fruit juice.",
+            "severity": "Low",
+            "penalty": 5
+        },
+        "INS 551": {
+            "name": "Silicon Dioxide (Anticaking Agent)",
+            "category": "Anticaking Agent",
+            "concern": "Nanoparticle powder used in processed seasonings and seasoning powders.",
             "severity": "Low",
             "penalty": 5
         },
         "INS 211": {
             "name": "Sodium Benzoate",
             "category": "Chemical Preservative",
-            "concern": "Can form trace benzene in presence of ascorbic acid (Vitamin C).",
+            "concern": "Can form trace benzene carcinogen in the presence of ascorbic acid (Vitamin C).",
             "severity": "Medium",
             "penalty": 10
         },
         "INS 223": {
             "name": "Sodium Metabisulphite",
             "category": "Chemical Preservative / Bleaching Agent",
-            "concern": "Potent allergen for asthmatics; often hidden in dried fruits and biscuits.",
+            "concern": "Potent allergen for asthmatics; often hidden in potato crisps, dried fruits, and biscuits.",
             "severity": "Medium",
             "penalty": 10
         },
@@ -120,6 +150,11 @@ class ComplianceRuleEngine:
 
         raw_lower = (raw_ingredients_text or "").lower()
         claims_text = " ".join(marketing_claims).lower()
+
+        # If ingredients_list is empty, tokenize from raw_ingredients_text
+        if not ingredients_list and raw_ingredients_text:
+            parts = [p.strip() for p in re.split(r'[,;•\n\(\)]+', raw_ingredients_text) if len(p.strip()) > 2]
+            ingredients_list = [{"name": p} for p in parts]
 
         # Nutrition normalized
         nutr_obj = NutritionPer100g(
@@ -148,11 +183,11 @@ class ComplianceRuleEngine:
                 r'\bwithout\s+added\s+sugar\b',
                 r'\bguilt[- ]free\s*(?:sugarless|sugar-free)?\b',
                 r'\bno\s+sugar\b',
-                r'\bun味的|sugarless\b'
+                r'\bsugarless\b'
             ]
         )
 
-        detected_hidden_sugars = [sugar for sugar in self.HIDDEN_SUGARS if sugar in raw_lower]
+        detected_hidden_sugars = [sugar for sugar in self.HIDDEN_SUGARS if sugar in raw_lower and sugar != "sugar"]
         has_high_sugar = nutr_obj.added_sugar_g > 1.0 or (nutr_obj.total_sugar_g > 5.0 and "zero sugar" in claims_text)
 
         if is_zero_sugar_claim and (detected_hidden_sugars or has_high_sugar):
@@ -253,7 +288,6 @@ class ComplianceRuleEngine:
         energy_kcal = nutr_obj.energy_kcal if nutr_obj.energy_kcal > 0 else 400.0
         protein_energy_pct = (protein_g * 4.0 / energy_kcal) * 100.0 if energy_kcal > 0 else 0.0
 
-        # FSSAI standard: "High Protein" requires at least 20% energy from protein (or >= 12g/100g solid food). "Source of protein" requires >= 10% energy or >= 6g/100g.
         is_insufficient_protein = (protein_g < 10.0 and "high protein" in claims_text) or (protein_energy_pct < 12.0 and is_protein_claim)
 
         if is_protein_claim and is_insufficient_protein:
@@ -304,25 +338,23 @@ class ComplianceRuleEngine:
                 severity="High",
                 regulation_reference="FSSAI Section 2.2.2.5 (Specific Declaration of Vegetable Fat Source)",
                 claim_text="Product advertised with healthy or premium claims on front.",
-                audit_finding=f"Contains {oil_desc}. Saturated fat is high at {nutr_obj.saturated_fat_g}g/100g.",
+                audit_finding=f"Contains {oil_desc}. Saturated fat is elevated at {nutr_obj.saturated_fat_g}g/100g.",
                 recommendation="Replace palm oil with cold-pressed sunflower/mustard/olive oil, or declare palm source explicitly."
             )
             violations.append(v)
 
-            if "healthy" in claims_text or "100% natural" in claims_text or "good for heart" in claims_text:
-                comparisons.append(ClaimComparison(
-                    front_claim="Healthy & Heart Friendly",
-                    reality_finding=f"Loaded with {oil_desc} ({nutr_obj.saturated_fat_g}g Saturated Fat)",
-                    status="violation",
-                    explanation="Palm oil is high in palmitic saturated fatty acids associated with elevated LDL cholesterol.",
-                    evidence=f"Fat: {nutr_obj.total_fat_g}g | Saturated Fat: {nutr_obj.saturated_fat_g}g"
-                ))
+            comparisons.append(ClaimComparison(
+                front_claim="Cooking Fat Formulation",
+                reality_finding=f"Deep-fried in {oil_desc} ({nutr_obj.saturated_fat_g}g Saturated Fat/100g)",
+                status="violation",
+                explanation="Palm oil and palmolein contain high palmitic saturated fatty acids known to elevate LDL cholesterol.",
+                evidence=f"Fat: {nutr_obj.total_fat_g}g | Saturated Fat: {nutr_obj.saturated_fat_g}g"
+            ))
 
         # ----------------------------------------------------
         # RULE E: "Chemical Additives & E-Number" Audit
         # ----------------------------------------------------
         for ins_code, meta in self.ADDITIVE_DATABASE.items():
-            # Search for INS 150d or E150d or specific chemical name
             clean_code = ins_code.replace("INS ", "")
             pattern = rf'(INS\s*{clean_code}\b|E{clean_code}\b|{re.escape(meta["name"].lower())})'
             if re.search(pattern, raw_lower, re.I):
@@ -349,7 +381,92 @@ class ComplianceRuleEngine:
             ))
 
         # ----------------------------------------------------
-        # RULE F: Color-Coded Ingredients Classification
+        # RULE F: HFSS (High Fat, Sugar & Salt) Statutory Violations
+        # ----------------------------------------------------
+        # FSSAI HFSS Sodium Norm: > 400mg / 100g solid food
+        if nutr_obj.sodium_mg > 400.0:
+            excess_pct = round(((nutr_obj.sodium_mg - 400.0) / 400.0) * 100.0)
+            salt_equivalent = round((nutr_obj.sodium_mg * 2.5) / 1000.0, 2)
+            penalty = 15
+            total_penalties += penalty
+
+            violations.append(ViolationItem(
+                rule_code="RULE_F_HFSS_SODIUM_HAZARD",
+                title="Excessive Sodium / Salt Exceeds FSSAI HFSS Limit",
+                severity="High",
+                regulation_reference="FSSAI Labelling and Display Regulations 2020 & 2024 Amendments (HFSS Thresholds)",
+                claim_text="Standard daily savory snack consumption.",
+                audit_finding=f"Contains {nutr_obj.sodium_mg}mg Sodium per 100g ({salt_equivalent}g Salt). Exceeds the statutory FSSAI HFSS cap (400mg/100g) by {excess_pct}%.",
+                recommendation="Reduce sodium chloride seasoning and artificial flavour salts to below 400mg/100g."
+            ))
+
+            comparisons.append(ClaimComparison(
+                front_claim="Sodium & Salt Profile",
+                reality_finding=f"High Sodium: {nutr_obj.sodium_mg}mg/100g (Exceeds FSSAI cap of 400mg by {excess_pct}%)",
+                status="violation",
+                explanation="High sodium intake directly correlates with elevated blood pressure and cardiovascular strain.",
+                evidence=f"Sodium: {nutr_obj.sodium_mg}mg / 100g | Salt equivalent: {salt_equivalent}g"
+            ))
+
+        # FSSAI HFSS Saturated Fat Norm: > 6.0g / 100g solid food
+        if nutr_obj.saturated_fat_g > 6.0:
+            excess_fat_pct = round(((nutr_obj.saturated_fat_g - 6.0) / 6.0) * 100.0)
+            penalty = 15
+            total_penalties += penalty
+
+            violations.append(ViolationItem(
+                rule_code="RULE_F_HFSS_SATURATED_FAT_HAZARD",
+                title="Excessive Saturated Fat Exceeds FSSAI Safe Benchmark",
+                severity="High",
+                regulation_reference="FSSAI Food Safety and Standards (Labelling and Display) Regulations 2020",
+                claim_text="Snack food nutritional profile.",
+                audit_finding=f"Contains {nutr_obj.saturated_fat_g}g Saturated Fat per 100g (Total Fat: {nutr_obj.total_fat_g}g). Exceeds statutory threshold of 6.0g/100g by {excess_fat_pct}%.",
+                recommendation="Switch to healthy polyunsaturated or monounsaturated vegetable oils to lower saturated fat."
+            ))
+
+            comparisons.append(ClaimComparison(
+                front_claim="Saturated Fat Profile",
+                reality_finding=f"High Saturated Fat: {nutr_obj.saturated_fat_g}g/100g (Exceeds FSSAI 6g cap by {excess_fat_pct}%)",
+                status="violation",
+                explanation="Saturated fats from refined palm oils contribute to atherogenic lipid profiles and arterial plaque.",
+                evidence=f"Saturated Fat: {nutr_obj.saturated_fat_g}g per 100g | Total Fat: {nutr_obj.total_fat_g}g"
+            ))
+
+        # ----------------------------------------------------
+        # RULE G: Fruit / Natural Flavor Deception (e.g. Lemon Potato Chips)
+        # ----------------------------------------------------
+        fruit_keywords = ["lemon", "lime", "mango", "strawberry", "tomato", "chilli", "jalapeno", "cheese", "cream"]
+        has_fruit_title = any(fk in claims_text or fk in product_category.lower() for fk in fruit_keywords)
+        has_synthetic_flavoring = any(fl in raw_lower for fl in [
+            "nature identical flavouring", "artificial flavouring", "flavour enhancer",
+            "ins 627", "ins 631", "ins 330", "citric acid", "synthetic"
+        ])
+        has_real_fruit_juice = any(fl in raw_lower for fl in ["lemon juice", "real fruit", "fruit powder", "concentrate (>5%)"])
+
+        if has_fruit_title and has_synthetic_flavoring and not has_real_fruit_juice:
+            penalty = 10
+            total_penalties += penalty
+
+            violations.append(ViolationItem(
+                rule_code="RULE_G_SYNTHETIC_FLAVOR_DECEPTION",
+                title="Synthetic Flavoring Disguised as Natural Ingredients",
+                severity="Medium",
+                regulation_reference="FSSAI (Advertising and Claims) Regulations 2018 (Section 4(3)) & Consumer Protection Act 2019",
+                claim_text="Product name or packaging highlights fresh fruit/natural spices.",
+                audit_finding="Taste profile relies predominantly on synthetic acidity regulators (INS 330), chemical nucleotides (INS 627/631), and nature-identical flavourings rather than real natural ingredients.",
+                recommendation="Declare 'Nature Identical Flavouring Substances' prominently on the front display panel as required under FSSAI."
+            ))
+
+            comparisons.append(ClaimComparison(
+                front_claim="Natural Flavor & Taste Profile",
+                reality_finding="Synthesized using INS 330 Acidity Regulators & INS 627/631 Chemical Enhancers",
+                status="misleading",
+                explanation="The tangy fruit flavour is simulated industrially with chemical acidulants rather than real natural juice.",
+                evidence="Ingredients: Acidity Regulators (INS 330), Flavour Enhancers (INS 627, INS 631), Nature Identical Flavouring Substances"
+            ))
+
+        # ----------------------------------------------------
+        # RULE H: Color-Coded Ingredients Classification
         # ----------------------------------------------------
         for ing in ingredients_list:
             name = ing.get("name", "").strip()
@@ -359,20 +476,18 @@ class ComplianceRuleEngine:
             flag_reason = None
             ins_code = ing.get("ins_code")
 
-            # Check Harmful (Red)
             if any(p in name_lower for p in self.PALM_OIL_VARIANTS) or "hydrogenated" in name_lower:
                 category = "harmful"
-                flag_reason = "High saturated / industrial fat source"
-            elif any(code in name_lower.upper() for code in ["INS 102", "INS 110", "INS 129", "INS 150D", "INS 950", "INS 951", "INS 955", "INS 211"]):
+                flag_reason = "High saturated / industrial palmolein fat source"
+            elif any(code in name_lower.upper() for code in ["INS 102", "INS 110", "INS 129", "INS 150D", "INS 950", "INS 951", "INS 955", "INS 211", "INS 627", "INS 631"]):
                 category = "harmful"
-                flag_reason = "Controversial chemical additive / artificial sweetener"
-            # Check Warning (Yellow)
-            elif any(s in name_lower for s in self.HIDDEN_SUGARS) or "sugar" in name_lower or "refined wheat" in name_lower or "maida" in name_lower or "emulsifier" in name_lower or "raising agent" in name_lower:
+                flag_reason = "Synthetic chemical additive / flavour enhancer / artificial color"
+            elif any(s in name_lower for s in self.HIDDEN_SUGARS) or "sugar" in name_lower or "refined wheat" in name_lower or "maida" in name_lower or "emulsifier" in name_lower or "ins 330" in name_lower or "ins 551" in name_lower or "flavouring" in name_lower:
                 category = "warning"
-                flag_reason = "Refined carbohydrate, hidden sugar, or industrial emulsifier"
+                flag_reason = "Refined carbohydrate, synthetic acidity regulator, or flavour substance"
             else:
                 category = "clean"
-                flag_reason = "Wholesome or standard food ingredient"
+                flag_reason = "Wholesome or standard agricultural ingredient"
 
             color_coded_ingredients.append(IngredientItem(
                 name=name,
@@ -384,7 +499,28 @@ class ComplianceRuleEngine:
             ))
 
         # ----------------------------------------------------
-        # RULE G: User Dietary Alerts
+        # RULE I: Statutory Baseline Comparisons (Always present)
+        # ----------------------------------------------------
+        if len(comparisons) < 2:
+            # Baseline 1: Cooking Fat
+            comparisons.append(ClaimComparison(
+                front_claim="Cooking Oil & Fat Standard",
+                reality_finding=f"Total Fat: {nutr_obj.total_fat_g}g/100g (Saturated: {nutr_obj.saturated_fat_g}g)",
+                status="violation" if (has_palm_oil or nutr_obj.saturated_fat_g > 6.0) else "verified",
+                explanation="FSSAI recommends limiting saturated fatty acids to below 10% total caloric intake.",
+                evidence=f"Total Fat: {nutr_obj.total_fat_g}g | Saturated Fat: {nutr_obj.saturated_fat_g}g"
+            ))
+            # Baseline 2: Sugar & Carbohydrates
+            comparisons.append(ClaimComparison(
+                front_claim="Sugar & Glycemic Load",
+                reality_finding=f"Total Sugar: {nutr_obj.total_sugar_g}g/100g (Carbs: {nutr_obj.total_carbohydrates_g}g)",
+                status="violation" if nutr_obj.total_sugar_g > 6.0 else "verified",
+                explanation="FSSAI HFSS guidelines classify solid foods with >6g added sugar per 100g as high in sugar.",
+                evidence=f"Carbohydrates: {nutr_obj.total_carbohydrates_g}g | Sugars: {nutr_obj.total_sugar_g}g"
+            ))
+
+        # ----------------------------------------------------
+        # RULE J: User Dietary Alerts
         # ----------------------------------------------------
         if user_pref.get("avoid_palm_oil", True) and (has_palm_oil or has_generic_veg_oil):
             dietary_warnings.append("⚠️ Contains Palm Oil / Palmolein (Matches your 'Avoid Palm Oil' alert)")
@@ -392,8 +528,8 @@ class ComplianceRuleEngine:
         if user_pref.get("diabetic_mode", False) and (detected_hidden_sugars or nutr_obj.total_sugar_g > 10.0):
             dietary_warnings.append(f"⚠️ High Glycemic Alert: Contains {nutr_obj.total_sugar_g}g Sugar + {', '.join(detected_hidden_sugars) if detected_hidden_sugars else 'Refined carbs'}")
         
-        if user_pref.get("low_sodium", False) and nutr_obj.sodium_mg > 400.0:
-            dietary_warnings.append(f"⚠️ High Sodium Alert: {nutr_obj.sodium_mg}mg Sodium per 100g (Exceeds low sodium threshold)")
+        if (user_pref.get("low_sodium", False) or nutr_obj.sodium_mg > 400.0):
+            dietary_warnings.append(f"⚠️ High Sodium Alert: {nutr_obj.sodium_mg}mg Sodium per 100g (Exceeds FSSAI HFSS cap of 400mg)")
 
         for allergen in user_pref.get("allergies", []):
             if allergen.lower() in raw_lower:
@@ -406,13 +542,13 @@ class ComplianceRuleEngine:
 
         if truth_score >= 80:
             verdict = "Verified"
-            verdict_desc = "Packaging claims are substantiated and adhere to regulatory labeling guidelines."
+            verdict_desc = "Packaging claims are substantiated and adhere to Indian FSSAI labeling norms."
         elif truth_score >= 50:
             verdict = "Misleading"
-            verdict_desc = "Front marketing claims present significant discrepancies when audited against back ingredients."
+            verdict_desc = "Front marketing claims present significant statutory discrepancies when audited against back ingredients and HFSS standards."
         else:
             verdict = "Violates Standards"
-            verdict_desc = "Critical statutory violations detected under FSSAI and consumer protection labeling regulations."
+            verdict_desc = "Critical statutory violations detected under Indian FSSAI Regulations (HFSS, Palm Oil, and Claims) and Consumer Protection Act 2019."
 
         # Generate Healthier Alternatives
         alternatives = self._generate_alternatives(product_category, violations)
@@ -434,7 +570,22 @@ class ComplianceRuleEngine:
         """Suggests genuinely clean food alternatives based on detected violations."""
         cat_lower = category.lower()
 
-        if "biscuit" in cat_lower or "cookie" in cat_lower or any("GRAIN" in v.rule_code for v in violations):
+        if "chip" in cat_lower or "wafer" in cat_lower or "snack" in cat_lower or any("HFSS" in v.rule_code for v in violations):
+            return [
+                AlternativeProduct(
+                    name="Vacuum Fried Beetroot & Sweet Potato Crisps",
+                    brand="RootPure Harvest",
+                    truth_score=94,
+                    why_better="Cooked in cold-pressed rice bran oil at low temperature. Sodium < 220mg/100g with zero INS 627/631 chemicals."
+                ),
+                AlternativeProduct(
+                    name="Roasted Makhana & Popped Lotus Seeds (Himalayan Salt)",
+                    brand="FarmClean Organics",
+                    truth_score=96,
+                    why_better="Zero palm oil, roasted without deep-frying, 0g trans fat, and 60% less sodium than potato chips."
+                )
+            ]
+        elif "biscuit" in cat_lower or "cookie" in cat_lower or any("GRAIN" in v.rule_code for v in violations):
             return [
                 AlternativeProduct(
                     name="Organic 100% Rolled Oats & Jaggery Cookies",
@@ -447,21 +598,6 @@ class ComplianceRuleEngine:
                     brand="ArtisanBake Co",
                     truth_score=92,
                     why_better="100% Stone-ground whole wheat, zero palm oil, no artificial preservatives (INS 211/150d)."
-                )
-            ]
-        elif "protein" in cat_lower or "bar" in cat_lower or any("PROTEIN" in v.rule_code for v in violations):
-            return [
-                AlternativeProduct(
-                    name="Raw Whey & Almond Clean Protein Bar",
-                    brand="TrueProtein",
-                    truth_score=96,
-                    why_better="22g genuine protein per bar, zero maltodextrin, sweetened naturally with whole dates."
-                ),
-                AlternativeProduct(
-                    name="Roasted Edamame & Seed Crunch",
-                    brand="SuperSnacks",
-                    truth_score=91,
-                    why_better="Plant-based 18g protein per 100g with zero refined sugars or artificial sweeteners."
                 )
             ]
         elif "juice" in cat_lower or "drink" in cat_lower or "beverage" in cat_lower or any("SUGAR" in v.rule_code for v in violations):
@@ -502,7 +638,8 @@ class ComplianceRuleEngine:
         raw_ing = extracted_data.get("ingredients_raw") or extracted_data.get("raw_ingredients_text", "")
         ing_list = extracted_data.get("ingredients_list", [])
         if not ing_list and raw_ing:
-            ing_list = [{"name": p.strip()} for p in raw_ing.split(",") if p.strip()]
+            parts = [p.strip() for p in re.split(r'[,;•\n\(\)]+', raw_ing) if len(p.strip()) > 2]
+            ing_list = [{"name": p} for p in parts]
         nutrition = extracted_data.get("nutrition_per_100g", {})
         cat = extracted_data.get("category", "Packaged Food")
         
