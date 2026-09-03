@@ -102,7 +102,7 @@ class PDFReportService:
         elements.append(Paragraph("NATIONAL FOOD SAFETY & CONSUMER COMPLIANCE AUDIT", title_style))
         elements.append(Spacer(1, 4))
         elements.append(Paragraph("FORMAL STATUTORY NOTICE OF MISLEADING PACKAGING & REGULATORY VIOLATIONS", subtitle_style))
-        elements.append(Paragraph("<font size=8 color='#64748B'>Issued pursuant to FSSAI Act 2006 (Sec 23/24) & Consumer Protection Act 2019 (Misleading Advertisements)</font>", ParagraphStyle('sub', alignment=1, spaceAfter=8)))
+        elements.append(Paragraph("<font size=8 color='#64748B'>Issued pursuant to FSSAI Act 2006 (Sec 23/24), Legal Metrology Act 2009 (Sec 18 / LMPC Rules 2011), & Consumer Protection Act 2019</font>", ParagraphStyle('sub', alignment=1, spaceAfter=8)))
         elements.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor('#0F172A'), spaceAfter=10))
 
         # 2. Product Meta & Truth Score Card Table
@@ -235,14 +235,16 @@ class PDFReportService:
         legal_block = [
             Paragraph("<b>4. STATUTORY DECLARATION & FORMAL GRIEVANCE SUBMISSION</b>", section_style),
             Paragraph(
-                "This audit report constitutes empirical documentary evidence of non-compliance under "
-                "<b>Section 23 & 24 of the Food Safety and Standards Act, 2006</b> and the <b>Consumer Protection Act, 2019</b>. "
-                "The audited packaging contains misleading representations intended to deceive reasonable consumers regarding true ingredient composition.",
+                "This audit report constitutes empirical documentary evidence of statutory non-compliance under "
+                "<b>Section 23 & 24 of the Food Safety and Standards Act, 2006</b>, "
+                "<b>The Legal Metrology (Packaged Commodities) Rules, 2011 (Rule 6)</b>, and the "
+                "<b>Consumer Protection Act, 2019</b>. "
+                "The audited packaging contains deceptive claims and misleading representations intended to mislead reasonable consumers regarding true ingredient composition and nutritional thresholds.",
                 body_style
             ),
             Spacer(1, 6),
             Paragraph(f"<b>Complainant / Auditor:</b> {report_data.get('complainant_name', 'Authorized Consumer Advocate')}", bold_body),
-            Paragraph("<b>Target Authority:</b> Central Consumer Protection Authority (CCPA) / FSSAI Grievance Portal (FOSCOS)", body_style),
+            Paragraph("<b>Target Statutory Authorities:</b> Central Consumer Protection Authority (CCPA) / Department of Consumer Affairs (National Consumer Helpline) / FSSAI FOSCOS Enforcement Directorate", body_style),
             Spacer(1, 10),
             Paragraph("<b>Verification Signature / Digital Timestamp:</b>", body_style),
             Paragraph("_____________________________________________ <br/><font size=7 color='#64748B'>Certified via LabelTruth AI Cryptographic Verification Engine</font>", body_style)

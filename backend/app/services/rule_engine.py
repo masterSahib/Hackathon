@@ -199,7 +199,7 @@ class ComplianceRuleEngine:
                 rule_code="RULE_A_ZERO_SUGAR_DECEPTION",
                 title="Deceptive 'Zero Added Sugar' Claim",
                 severity="Critical",
-                regulation_reference="FSSAI Claims & Advertisements Reg. 2018 (Section 5(2)) & Consumer Protection Act 2019",
+                regulation_reference="FSSAI Claims Reg. 2018 (Sec 5(2)), Legal Metrology Act 2009 (Sec 18) & Consumer Protection Act 2019",
                 claim_text="Product promotes 'No Added Sugar' or 'Zero Sugar' on front of pack.",
                 audit_finding=f"Back ingredients panel contains hidden glycemic sugars / sweeteners: {found_str}. Added sugars: {nutr_obj.added_sugar_g}g/100g, Total sugars: {nutr_obj.total_sugar_g}g/100g.",
                 recommendation="Cease front-of-pack 'Zero Sugar' claims or reformulate without maltodextrin/invert syrups."
@@ -253,10 +253,10 @@ class ComplianceRuleEngine:
                 rule_code="RULE_B_GRAIN_HIERARCHY_DECEPTION",
                 title="Deceptive Whole Wheat / Grain Marketing",
                 severity="Critical",
-                regulation_reference="FSSAI Labelling and Display Regulations 2020 (Section 23 & Regulation 5(1))",
+                regulation_reference="FSSAI Labelling Reg. 2020 (Sec 23 & Reg 5(1)) & Legal Metrology (Packaged Commodities) Rules 2011 (Rule 6(1)(b))",
                 claim_text="Front label showcases '100% Whole Wheat' / 'Made with Real Atta' imagery and slogans.",
-                audit_finding="Ingredient hierarchy reveals Refined Wheat Flour (Maida) as the predominant #1 ingredient before Whole Wheat.",
-                recommendation="Disclose exact percentage of Whole Wheat on front panel and declare Maida clearly as primary flour."
+                audit_finding="Ingredient hierarchy reveals Refined Wheat Flour (Maida) as the predominant #1 ingredient before Whole Wheat, violating mandatory generic commodity declaration rules.",
+                recommendation="Disclose exact percentage of Whole Wheat on front panel and declare Maida clearly as primary flour under LMPC Rule 6."
             )
             violations.append(v)
 
@@ -451,7 +451,7 @@ class ComplianceRuleEngine:
                 rule_code="RULE_G_SYNTHETIC_FLAVOR_DECEPTION",
                 title="Synthetic Flavoring Disguised as Natural Ingredients",
                 severity="Medium",
-                regulation_reference="FSSAI (Advertising and Claims) Regulations 2018 (Section 4(3)) & Consumer Protection Act 2019",
+                regulation_reference="FSSAI Claims Reg. 2018 (Sec 4(3)), Legal Metrology (Packaged Commodities) Rules 2011 (Rule 6) & Consumer Protection Act 2019",
                 claim_text="Product name or packaging highlights fresh fruit/natural spices.",
                 audit_finding="Taste profile relies predominantly on synthetic acidity regulators (INS 330), chemical nucleotides (INS 627/631), and nature-identical flavourings rather than real natural ingredients.",
                 recommendation="Declare 'Nature Identical Flavouring Substances' prominently on the front display panel as required under FSSAI."

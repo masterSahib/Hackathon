@@ -19,17 +19,17 @@ async def list_active_rules():
         ComplianceRuleInfo(
             code="RULE_A_ZERO_SUGAR_DECEPTION",
             name="Zero Sugar & No Added Sugar Deception",
-            regulation_reference="FSSAI Claims & Advertisements Regulations 2018, Section 5(2)",
+            regulation_reference="FSSAI Claims Reg. 2018 Sec 5(2) & Legal Metrology Act 2009 Sec 18",
             severity="Critical",
-            description="Audits if products claiming 'No Added Sugar' conceal high glycemic index fillers (maltodextrin, invert syrups, fruit concentrates).",
+            description="Audits if products claiming 'No Added Sugar' conceal high glycemic index fillers (maltodextrin, invert syrups, liquid glucose).",
             penalty_points=30
         ),
         ComplianceRuleInfo(
             code="RULE_B_GRAIN_HIERARCHY_DECEPTION",
             name="Whole Wheat / Atta Hierarchy Inversion",
-            regulation_reference="FSSAI Labelling and Display Regulations 2020, Section 23 & Reg 5(1)",
+            regulation_reference="FSSAI Labelling Reg. 2020 Sec 23 & Legal Metrology (Packaged Commodities) Rules 2011 Rule 6(1)(b)",
             severity="Critical",
-            description="Audits if packaging claiming '100% Whole Wheat' or 'Made with Atta' lists Refined Flour (Maida) as the predominant #1 ingredient.",
+            description="Audits if packaging claiming '100% Whole Wheat' or 'Made with Atta' lists Refined Flour (Maida) as the predominant #1 ingredient in violation of generic commodity declaration rules.",
             penalty_points=25
         ),
         ComplianceRuleInfo(
@@ -43,25 +43,33 @@ async def list_active_rules():
         ComplianceRuleInfo(
             code="RULE_D_PALM_OIL_MASKING",
             name="Palm Oil Disguise / Generic Vegetable Oil Audit",
-            regulation_reference="FSSAI Section 2.2.2.5 (Specific Declaration of Vegetable Fat)",
+            regulation_reference="FSSAI Section 2.2.2.5 & Legal Metrology (Packaged Commodities) Rules 2011",
             severity="High",
-            description="Flags products concealing high-palmitic palm oil or generic 'Edible Vegetable Oil' without mandatory source declaration.",
+            description="Flags products concealing high-palmitic palm oil or generic 'Edible Vegetable Oil' without mandatory vegetable fat source declaration.",
             penalty_points=20
         ),
         ComplianceRuleInfo(
             code="RULE_E_CHEMICAL_ADDITIVES",
             name="Harmful Synthetic Dyes, Preservatives & Sweeteners",
-            regulation_reference="FSSAI Food Products Standards and Food Additives Regulations (INS Standards)",
+            regulation_reference="FSSAI Food Additives INS Standards & Consumer Protection Act 2019",
             severity="High",
-            description="Audits toxic synthetic azo dyes (INS 102/110/129), Caramel Color IV (INS 150d), MSG (INS 621), and intense sweeteners (INS 950/951/955).",
+            description="Audits toxic synthetic azo dyes (INS 102/110/129), Caramel Color IV (INS 150d), flavour enhancers (INS 627/631), and intense sweeteners (INS 950/951/955).",
             penalty_points=10
         ),
         ComplianceRuleInfo(
-            code="RULE_F_TRANS_FAT_LIMIT",
-            name="Industrial Trans Fat Safety Limit (<2%)",
-            regulation_reference="FSSAI Trans Fatty Acid Limits Regulation",
-            severity="Critical",
-            description="Strictly flags partially hydrogenated fats and vanaspati in packaged consumer items.",
-            penalty_points=25
+            code="RULE_F_HFSS_SODIUM_AND_FAT_HAZARDS",
+            name="HFSS Sodium, Salt & Saturated Fat Threshold Caps",
+            regulation_reference="FSSAI Labelling & Display Regulations 2020 (HFSS Standards) & ICMR-NIN Dietary Guidelines",
+            severity="High",
+            description="Enforces Indian statutory caps on high sodium (>400mg/100g) and saturated fat (>6g/100g) in packaged snacks.",
+            penalty_points=15
+        ),
+        ComplianceRuleInfo(
+            code="RULE_G_LMPC_MANDATORY_DECLARATIONS",
+            name="Legal Metrology Mandatory Declarations & Unit Sale Pricing",
+            regulation_reference="Legal Metrology Act, 2009 & Legal Metrology (Packaged Commodities) Rules, 2011 (Rule 6)",
+            severity="Medium",
+            description="Verifies mandatory declaration of generic product identity, Net Quantity, Unit Sale Price (USP), and Consumer Care details on principal display panels.",
+            penalty_points=10
         )
     ]
