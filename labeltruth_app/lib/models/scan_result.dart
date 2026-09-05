@@ -183,7 +183,7 @@ class ViolationItem {
       ruleCode: json['rule_code'] as String? ?? '',
       title: json['title'] as String? ?? 'Statutory Violation',
       severity: json['severity'] as String? ?? 'High',
-      regulationReference: json['regulation_reference'] as String? ?? 'FSSAI Section 23',
+      regulationReference: json['regulation_reference'] as String? ?? 'Legal Metrology / FSSAI',
       claimText: json['claim_text'] as String? ?? '',
       auditFinding: json['audit_finding'] as String? ?? '',
       recommendation: json['recommendation'] as String? ?? '',
@@ -231,6 +231,107 @@ class AlternativeProduct {
   };
 }
 
+class MandatoryDeclarationItem {
+  final String declarationKey;
+  final String ruleClause;
+  final String title;
+  final bool isPresent;
+  final String? extractedText;
+  final bool isCompliant;
+  final String? legalDefect;
+  final String statutoryReference;
+
+  MandatoryDeclarationItem({
+    required this.declarationKey,
+    required this.ruleClause,
+    required this.title,
+    this.isPresent = false,
+    this.extractedText,
+    this.isCompliant = true,
+    this.legalDefect,
+    this.statutoryReference = "Legal Metrology (Packaged Commodities) Rules, 2011",
+  });
+
+  factory MandatoryDeclarationItem.fromJson(Map<String, dynamic> json) {
+    return MandatoryDeclarationItem(
+      declarationKey: json['declaration_key'] as String? ?? '',
+      ruleClause: json['rule_clause'] as String? ?? 'Rule 6',
+      title: json['title'] as String? ?? 'Mandatory Declaration',
+      isPresent: json['is_present'] as bool? ?? false,
+      extractedText: json['extracted_text'] as String?,
+      isCompliant: json['is_compliant'] as bool? ?? true,
+      legalDefect: json['legal_defect'] as String?,
+      statutoryReference: json['statutory_reference'] as String? ?? 'LMPC Rules, 2011',
+    );
+  }
+}
+
+class MandatoryDeclarationsAudit {
+  final int totalDeclarations;
+  final int passedCount;
+  final int failedCount;
+  final double compliancePercentage;
+  final List<MandatoryDeclarationItem> items;
+
+  MandatoryDeclarationsAudit({
+    this.totalDeclarations = 7,
+    this.passedCount = 0,
+    this.failedCount = 0,
+    this.compliancePercentage = 100.0,
+    this.items = const [],
+  });
+
+  factory MandatoryDeclarationsAudit.fromJson(Map<String, dynamic>? json) {
+    if (json == null) return MandatoryDeclarationsAudit();
+    return MandatoryDeclarationsAudit(
+      totalDeclarations: (json['total_declarations'] as num?)?.toInt() ?? 7,
+      passedCount: (json['passed_count'] as num?)?.toInt() ?? 0,
+      failedCount: (json['failed_count'] as num?)?.toInt() ?? 0,
+      compliancePercentage: (json['compliance_percentage'] as num?)?.toDouble() ?? 100.0,
+      items: (json['items'] as List<dynamic>?)
+              ?.map((e) => MandatoryDeclarationItem.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+    );
+  }
+}
+
+class FontReadabilityAudit {
+  final double pdpAreaSqCm;
+  final String netQuantityBracket;
+  final double minRequiredFontHeightMm;
+  final double detectedFontHeightMm;
+  final bool isFontCompliant;
+  final int readabilityScore;
+  final String contrastRatio;
+  final String remarks;
+
+  FontReadabilityAudit({
+    this.pdpAreaSqCm = 140.0,
+    this.netQuantityBracket = "50g to 200g",
+    this.minRequiredFontHeightMm = 2.0,
+    this.detectedFontHeightMm = 2.5,
+    this.isFontCompliant = true,
+    this.readabilityScore = 90,
+    this.contrastRatio = "High Contrast (Black on white display panel)",
+    this.remarks = "Conforms to LMPC Rule 7 & Schedule-II minimum numeral height requirements.",
+  });
+
+  factory FontReadabilityAudit.fromJson(Map<String, dynamic>? json) {
+    if (json == null) return FontReadabilityAudit();
+    return FontReadabilityAudit(
+      pdpAreaSqCm: (json['pdp_area_sq_cm'] as num?)?.toDouble() ?? 140.0,
+      netQuantityBracket: json['net_quantity_bracket'] as String? ?? '50g to 200g',
+      minRequiredFontHeightMm: (json['min_required_font_height_mm'] as num?)?.toDouble() ?? 2.0,
+      detectedFontHeightMm: (json['detected_font_height_mm'] as num?)?.toDouble() ?? 2.5,
+      isFontCompliant: json['is_font_compliant'] as bool? ?? true,
+      readabilityScore: (json['readability_score'] as num?)?.toInt() ?? 90,
+      contrastRatio: json['contrast_ratio'] as String? ?? 'High Contrast',
+      remarks: json['remarks'] as String? ?? 'Conforms to LMPC Rule 7',
+    );
+  }
+}
+
 class ScanResult {
   final String scanId;
   final String productId;
@@ -248,6 +349,8 @@ class ScanResult {
   final NutritionPer100g nutritionPer100g;
   final List<String> dietaryWarnings;
   final List<AlternativeProduct> healthierAlternatives;
+  final MandatoryDeclarationsAudit? mandatoryDeclarations;
+  final FontReadabilityAudit? fontReadability;
   final bool pdfReportAvailable;
   final DateTime createdAt;
 
@@ -268,6 +371,8 @@ class ScanResult {
     required this.nutritionPer100g,
     this.dietaryWarnings = const [],
     this.healthierAlternatives = const [],
+    this.mandatoryDeclarations,
+    this.fontReadability,
     this.pdfReportAvailable = true,
     required this.createdAt,
   });
@@ -305,6 +410,12 @@ class ScanResult {
               ?.map((e) => AlternativeProduct.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      mandatoryDeclarations: json['mandatory_declarations'] != null
+          ? MandatoryDeclarationsAudit.fromJson(json['mandatory_declarations'] as Map<String, dynamic>?)
+          : null,
+      fontReadability: json['font_readability'] != null
+          ? FontReadabilityAudit.fromJson(json['font_readability'] as Map<String, dynamic>?)
+          : null,
       pdfReportAvailable: json['pdf_report_available'] as bool? ?? true,
       createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now() : DateTime.now(),
     );

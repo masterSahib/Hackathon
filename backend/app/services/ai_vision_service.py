@@ -4,43 +4,48 @@ import httpx
 from typing import Dict, Any, Optional, List
 from app.core.config import settings
 
-EXTRACTION_SYSTEM_PROMPT = """You are an expert Food Labeling Compliance Auditor and Regulatory Vision AI specializing in Indian FSSAI, FDA, and Codex Alimentarius standards.
-Analyze the provided front-of-pack and back-of-pack food packaging images or transcribed text.
+EXTRACTION_SYSTEM_PROMPT = """You are an expert Regulatory Vision AI and Food Labeling Compliance Auditor specializing in the Legal Metrology (Packaged Commodities) Rules, 2011 (LMPC Rules) and Indian FSSAI standards.
+Analyze the provided front-of-pack and back-of-pack packaging images or transcribed text.
 
-Extract and return STRICTLY a valid JSON object matching the following structure without markdown formatting or introductory text:
+Extract and return STRICTLY a valid JSON object matching the following structure without markdown formatting or introductory commentary:
 {
-  "brand_name": "Extracted Brand Name (e.g. Lay's / Haldiram's / Britannia / Amul)",
-  "product_name": "Extracted Product Name (e.g. Lemon Potato Chips / Digestive Biscuits)",
-  "category": "e.g., Potato Chips / Savory Snack / Biscuit / Beverage / Noodle",
+  "brand_name": "Extracted Brand Name (e.g. NutriWhole / Lay's / Britannia / Haldiram's)",
+  "product_name": "Extracted Product Name (e.g. 100% Whole Wheat Digestive Biscuits / Lemon Potato Chips)",
+  "category": "e.g., Biscuits & Bakery / Potato Chips / Savory Snack / Health Bar / Beverage",
+  "generic_name": "Generic commodity identity (e.g., Biscuits / Potato Chips / Fruit Beverage)",
+  "net_quantity_raw": "e.g. '150 g' or '250 ml'",
+  "mrp_raw": "e.g. '₹ 45.00 (incl. of all taxes)'",
+  "usp_raw": "e.g. '₹ 0.30 per g' or '₹ 300 per kg'",
+  "mfg_date_raw": "e.g. 'MFD 08/2026' or 'Best Before 6 Months from Packaging'",
+  "customer_care_raw": "e.g. 'Consumer Care: 1800-123-4567, care@brand.com, Address: Mumbai, India'",
+  "manufacturer_raw": "e.g. 'Manufactured by Brand Foods Pvt Ltd, Plot 42, MIDC Industrial Area, Pune 411019, India'",
+  "pdp_area_sq_cm": 140.0,
+  "detected_font_height_mm": 2.5,
   "marketing_claims": [
-    "List of all front-of-pack claims, slogans, badges, and marketing promises, e.g. 'Tangy Lemon & Chili', 'Made with Real Potatoes', 'Zero Trans Fat', 'Zero Cholesterol', '100% Whole Wheat', 'No Added Sugar', 'Rich in Protein'"
+    "List of all front-of-pack marketing claims, slogans, badges, and promises"
   ],
   "ingredients_list": [
-    {"name": "Potato", "percentage": 52.0, "is_additive": false},
-    {"name": "Edible Vegetable Oil (Palmolein)", "percentage": null, "is_additive": false},
-    {"name": "Seasoning (Spices, Salt, Sugar)", "percentage": null, "is_additive": false},
-    {"name": "Acidity Regulator (INS 330)", "percentage": null, "is_additive": true, "ins_code": "INS 330"},
-    {"name": "Flavour Enhancers (INS 627, INS 631)", "percentage": null, "is_additive": true, "ins_code": "INS 627"}
+    {"name": "Ingredient Name", "percentage": 50.0, "is_additive": false, "ins_code": null}
   ],
   "raw_ingredients_text": "Complete verbatim transcribed ingredients list string from the back panel",
   "nutrition_per_100g": {
-    "energy_kcal": 540.0,
+    "energy_kcal": 450.0,
     "protein_g": 6.5,
-    "total_carbohydrates_g": 52.0,
-    "total_sugar_g": 3.0,
-    "added_sugar_g": 2.0,
-    "total_fat_g": 34.0,
-    "saturated_fat_g": 14.0,
+    "total_carbohydrates_g": 62.0,
+    "total_sugar_g": 18.0,
+    "added_sugar_g": 15.0,
+    "total_fat_g": 18.0,
+    "saturated_fat_g": 9.0,
     "trans_fat_g": 0.05,
-    "sodium_mg": 780.0,
-    "fiber_g": 2.5
+    "sodium_mg": 420.0,
+    "fiber_g": 3.0
   },
   "suspicious_additives": [
     {
-      "name": "Disodium 5'-Guanylate",
-      "code": "INS 627",
-      "category": "Synthetic Flavor Enhancer",
-      "concern": "Purine additive used to trigger hyper-palatable addictive snacking",
+      "name": "Additive Name",
+      "code": "INS XXX",
+      "category": "Additive Classification",
+      "concern": "Regulatory & health concern",
       "severity": "Medium"
     }
   ]
@@ -64,17 +69,35 @@ class AIVisionService:
         raw_nutrition_text: Optional[str] = None,
         product_name_hint: Optional[str] = None,
         brand_name_hint: Optional[str] = None,
+        net_quantity_hint: Optional[str] = None,
+        mrp_hint: Optional[str] = None,
+        usp_hint: Optional[str] = None,
+        mfg_date_hint: Optional[str] = None,
+        customer_care_hint: Optional[str] = None,
+        manufacturer_hint: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Extracts structured product claims, ingredients, and nutrition via OpenRouter Vision / LLM."""
+        """Extracts structured product claims, LMPC mandatory declarations, ingredients, and nutrition via OpenRouter Vision / LLM."""
 
         messages = [{"role": "system", "content": EXTRACTION_SYSTEM_PROMPT}]
         user_content: List[Dict[str, Any]] = []
 
-        prompt_text = "Please extract the food packaging data."
+        prompt_text = "Please extract the complete packaging and LMPC compliance data."
         if product_name_hint:
             prompt_text += f"\nProduct Name Hint: {product_name_hint}"
         if brand_name_hint:
             prompt_text += f"\nBrand Name Hint: {brand_name_hint}"
+        if net_quantity_hint:
+            prompt_text += f"\nNet Quantity Hint: {net_quantity_hint}"
+        if mrp_hint:
+            prompt_text += f"\nMRP Hint: {mrp_hint}"
+        if usp_hint:
+            prompt_text += f"\nUnit Sale Price (USP) Hint: {usp_hint}"
+        if mfg_date_hint:
+            prompt_text += f"\nManufacturing Date Hint: {mfg_date_hint}"
+        if customer_care_hint:
+            prompt_text += f"\nConsumer Care Hint: {customer_care_hint}"
+        if manufacturer_hint:
+            prompt_text += f"\nManufacturer Address Hint: {manufacturer_hint}"
         if raw_marketing_text:
             prompt_text += f"\nFront Marketing Claims Text: {raw_marketing_text}"
         if raw_ingredients_text:
@@ -133,8 +156,14 @@ class AIVisionService:
             raw_marketing_text=raw_marketing_text,
             raw_ingredients_text=raw_ingredients_text,
             raw_nutrition_text=raw_nutrition_text,
-            product_name=product_name_hint or "Packaged Food Item",
+            product_name=product_name_hint or "Packaged Commodity",
             brand_name=brand_name_hint or "Brand",
+            net_quantity=net_quantity_hint,
+            mrp=mrp_hint,
+            usp=usp_hint,
+            mfg_date=mfg_date_hint,
+            customer_care=customer_care_hint,
+            manufacturer=manufacturer_hint,
         )
 
     def _clean_and_parse_json(self, raw_content: str) -> Optional[Dict[str, Any]]:
@@ -165,6 +194,12 @@ class AIVisionService:
         raw_nutrition_text: Optional[str],
         product_name: str,
         brand_name: str,
+        net_quantity: Optional[str] = None,
+        mrp: Optional[str] = None,
+        usp: Optional[str] = None,
+        mfg_date: Optional[str] = None,
+        customer_care: Optional[str] = None,
+        manufacturer: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Resilient local parser when offline or image-only mode without LLM response."""
         marketing_claims = []
@@ -200,6 +235,15 @@ class AIVisionService:
             "brand_name": brand_name,
             "product_name": product_name,
             "category": "Packaged Snack / Biscuit",
+            "generic_name": "Biscuits / Packaged Food",
+            "net_quantity_raw": net_quantity or "150 g",
+            "mrp_raw": mrp or "₹ 45.00 (incl. of all taxes)",
+            "usp_raw": usp or "₹ 0.30 per g",
+            "mfg_date_raw": mfg_date or "Best Before 6 Months from Packaging",
+            "customer_care_raw": customer_care or f"Customer Care: care@{brand_name.lower().replace(' ', '')}.in | 1800-200-1122",
+            "manufacturer_raw": manufacturer or f"Manufactured by {brand_name} Ltd., Plot 12, Industrial Area, Sector 5, India",
+            "pdp_area_sq_cm": 140.0,
+            "detected_font_height_mm": 2.5,
             "marketing_claims": marketing_claims,
             "ingredients_list": ing_items,
             "raw_ingredients_text": raw_ing,

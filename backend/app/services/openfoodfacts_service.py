@@ -38,7 +38,7 @@ class OpenFoodFactsService:
         barcode: str,
         user_preferences: Optional[Dict[str, Any]] = None
     ) -> AnalysisResponse:
-        """Parse Open Food Facts raw product data and execute FSSAI compliance audit."""
+        """Parse Open Food Facts raw product data and execute Legal Metrology & FSSAI compliance audit."""
         brand_name = product_data.get("brands") or product_data.get("brand_owner") or "Unknown Brand"
         if "," in brand_name:
             brand_name = brand_name.split(",")[0].strip()
@@ -131,6 +131,7 @@ class OpenFoodFactsService:
             "marketing_claims": clean_claims,
             "ingredients_raw": ingredients_text,
             "nutrition_per_100g": nutrition.dict(),
+            "net_quantity_raw": product_data.get("quantity"),
         }
 
         eval_dict = RuleEngine.evaluate_fssai_compliance(
@@ -155,6 +156,8 @@ class OpenFoodFactsService:
             nutrition_per_100g=eval_dict["nutrition_per_100g"],
             dietary_warnings=eval_dict["dietary_warnings"],
             healthier_alternatives=eval_dict["healthier_alternatives"],
+            mandatory_declarations=eval_dict.get("mandatory_declarations"),
+            font_readability=eval_dict.get("font_readability"),
             pdf_report_available=True,
             created_at=datetime.utcnow(),
         )

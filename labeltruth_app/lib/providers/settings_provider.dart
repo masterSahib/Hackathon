@@ -10,6 +10,10 @@ class SettingsState {
   final bool avoidArtificialSweeteners;
   final List<String> allergies;
   final String backendUrl;
+  final bool isOfficerMode;
+  final String badgeNumber;
+  final String jurisdiction;
+  final String department;
 
   SettingsState({
     this.avoidPalmOil = true,
@@ -19,6 +23,10 @@ class SettingsState {
     this.avoidArtificialSweeteners = true,
     this.allergies = const [],
     this.backendUrl = ApiEndpoints.defaultBaseUrl,
+    this.isOfficerMode = true,
+    this.badgeNumber = "LMPC-NZ-2026-442",
+    this.jurisdiction = "North Zone Directorate, New Delhi",
+    this.department = "Legal Metrology & Packaging Enforcement",
   });
 
   SettingsState copyWith({
@@ -29,6 +37,10 @@ class SettingsState {
     bool? avoidArtificialSweeteners,
     List<String>? allergies,
     String? backendUrl,
+    bool? isOfficerMode,
+    String? badgeNumber,
+    String? jurisdiction,
+    String? department,
   }) {
     return SettingsState(
       avoidPalmOil: avoidPalmOil ?? this.avoidPalmOil,
@@ -38,6 +50,10 @@ class SettingsState {
       avoidArtificialSweeteners: avoidArtificialSweeteners ?? this.avoidArtificialSweeteners,
       allergies: allergies ?? this.allergies,
       backendUrl: backendUrl ?? this.backendUrl,
+      isOfficerMode: isOfficerMode ?? this.isOfficerMode,
+      badgeNumber: badgeNumber ?? this.badgeNumber,
+      jurisdiction: jurisdiction ?? this.jurisdiction,
+      department: department ?? this.department,
     );
   }
 
@@ -67,8 +83,30 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
         avoidArtificialSweeteners: prefs.getBool('avoid_sweeteners') ?? true,
         allergies: prefs.getStringList('allergies') ?? [],
         backendUrl: prefs.getString('backend_url') ?? ApiEndpoints.defaultBaseUrl,
+        isOfficerMode: prefs.getBool('is_officer_mode') ?? true,
+        badgeNumber: prefs.getString('badge_number') ?? "LMPC-NZ-2026-442",
+        jurisdiction: prefs.getString('jurisdiction') ?? "North Zone Directorate, New Delhi",
+        department: prefs.getString('department') ?? "Legal Metrology & Packaging Enforcement",
       );
     } catch (_) {}
+  }
+
+  Future<void> updateOfficerMode(bool val) async {
+    state = state.copyWith(isOfficerMode: val);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('is_officer_mode', val);
+  }
+
+  Future<void> updateBadgeNumber(String val) async {
+    state = state.copyWith(badgeNumber: val);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('badge_number', val);
+  }
+
+  Future<void> updateJurisdiction(String val) async {
+    state = state.copyWith(jurisdiction: val);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('jurisdiction', val);
   }
 
   Future<void> updateAvoidPalmOil(bool val) async {

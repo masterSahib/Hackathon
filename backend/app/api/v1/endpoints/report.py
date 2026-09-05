@@ -1,3 +1,4 @@
+import json
 import base64
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
@@ -17,11 +18,11 @@ async def generate_pdf_report(request: GeneratePdfRequest):
         report_dict = request.dict()
         pdf_b64 = pdf_service.generate_base64_pdf(report_dict)
         clean_name = "".join(c for c in request.product_name if c.isalnum() or c in (' ', '_', '-')).rstrip()
-        filename = f"FSSAI_Notice_{clean_name.replace(' ', '_')}.pdf"
+        filename = f"LMPC_Statutory_Notice_{clean_name.replace(' ', '_')}.pdf"
 
         return GeneratePdfResponse(
             success=True,
-            message="FSSAI Grievance & Violation Notice PDF generated successfully.",
+            message="Statutory LMPC & FSSAI Violation Notice PDF generated successfully.",
             filename=filename,
             pdf_base64=pdf_b64,
             download_url=f"/api/v1/report/download-direct"
@@ -49,6 +50,8 @@ async def download_scan_pdf(
         ingredients_list=[{"name": p.strip()} for p in raw_ing.split(",") if p.strip()],
         nutrition=scan.nutrition_per_100g or {},
         raw_ingredients_text=raw_ing,
+        brand_name=brand,
+        product_name=pname,
     )
 
     report_payload = {
@@ -63,6 +66,8 @@ async def download_scan_pdf(
         "suspicious_additives": eval_result["suspicious_additives"],
         "ingredients": eval_result["ingredients"],
         "nutrition": scan.nutrition_per_100g or {},
+        "mandatory_declarations": eval_result["mandatory_declarations"],
+        "font_readability": eval_result["font_readability"],
     }
 
     pdf_bytes = pdf_service.generate_violation_notice(report_payload)
@@ -72,6 +77,105 @@ async def download_scan_pdf(
         content=pdf_bytes,
         media_type="application/pdf",
         headers={
-            "Content-Disposition": f"attachment; filename=FSSAI_Violation_Notice_{clean_pname}.pdf"
+            "Content-Disposition": f"attachment; filename=LMPC_Violation_Notice_{clean_pname}.pdf"
+        }
+    )
+
+@router.get("/download-csv/{scan_id}")
+async def download_scan_csv(
+    scan_id: str,
+    db: Session = Depends(get_db)
+):
+    """Downloads an editable CSV compliance inspection report for spreadsheet editing."""
+    scan = db.query(ScanHistory).filter(ScanHistory.id == scan_id).first()
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan record not found")
+
+    product = db.query(Product).filter(Product.id == scan.product_id).first()
+    brand = product.brand_name if product else "Brand"
+    pname = product.product_name if product else "Product"
+    raw_ing = product.raw_ingredients_text if product else ""
+
+    eval_result = rule_engine.evaluate_compliance(
+        marketing_claims=scan.detected_claims or [],
+        ingredients_list=[{"name": p.strip()} for p in raw_ing.split(",") if p.strip()],
+        nutrition=scan.nutrition_per_100g or {},
+        raw_ingredients_text=raw_ing,
+        brand_name=brand,
+        product_name=pname,
+    )
+
+    report_payload = {
+        "product_name": pname,
+        "brand_name": brand,
+        "barcode": product.barcode if product else "N/A",
+        "truth_score": scan.truth_score,
+        "verdict": scan.verdict,
+        "marketing_claims": scan.detected_claims or [],
+        "claim_comparisons": eval_result["claim_comparisons"],
+        "violations": eval_result["violations"],
+        "mandatory_declarations": eval_result["mandatory_declarations"],
+        "font_readability": eval_result["font_readability"],
+    }
+
+    csv_text = pdf_service.generate_csv_report(report_payload)
+    clean_pname = "".join(c for c in pname if c.isalnum() or c in (' ', '_', '-')).replace(' ', '_')
+
+    return Response(
+        content=csv_text,
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename=LMPC_Inspection_{clean_pname}.csv"
+        }
+    )
+
+@router.get("/download-json/{scan_id}")
+async def download_scan_json(
+    scan_id: str,
+    db: Session = Depends(get_db)
+):
+    """Downloads full structured editable JSON audit docket."""
+    scan = db.query(ScanHistory).filter(ScanHistory.id == scan_id).first()
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan record not found")
+
+    product = db.query(Product).filter(Product.id == scan.product_id).first()
+    brand = product.brand_name if product else "Brand"
+    pname = product.product_name if product else "Product"
+    raw_ing = product.raw_ingredients_text if product else ""
+
+    eval_result = rule_engine.evaluate_compliance(
+        marketing_claims=scan.detected_claims or [],
+        ingredients_list=[{"name": p.strip()} for p in raw_ing.split(",") if p.strip()],
+        nutrition=scan.nutrition_per_100g or {},
+        raw_ingredients_text=raw_ing,
+        brand_name=brand,
+        product_name=pname,
+    )
+
+    docket = {
+        "scan_id": scan.id,
+        "product_id": scan.product_id,
+        "product_name": pname,
+        "brand_name": brand,
+        "barcode": product.barcode if product else "N/A",
+        "truth_score": scan.truth_score,
+        "verdict": scan.verdict,
+        "verdict_description": eval_result["verdict_description"],
+        "marketing_claims": scan.detected_claims or [],
+        "claim_comparisons": [c.model_dump() if hasattr(c, "model_dump") else c for c in eval_result["claim_comparisons"]],
+        "violations": [v.model_dump() if hasattr(v, "model_dump") else v for v in eval_result["violations"]],
+        "mandatory_declarations": eval_result["mandatory_declarations"].model_dump() if hasattr(eval_result["mandatory_declarations"], "model_dump") else eval_result["mandatory_declarations"],
+        "font_readability": eval_result["font_readability"].model_dump() if hasattr(eval_result["font_readability"], "model_dump") else eval_result["font_readability"],
+        "nutrition_per_100g": eval_result["nutrition_per_100g"].model_dump() if hasattr(eval_result["nutrition_per_100g"], "model_dump") else eval_result["nutrition_per_100g"],
+        "created_at": scan.created_at.isoformat() if scan.created_at else None,
+    }
+
+    clean_pname = "".join(c for c in pname if c.isalnum() or c in (' ', '_', '-')).replace(' ', '_')
+    return Response(
+        content=json.dumps(docket, indent=2),
+        media_type="application/json",
+        headers={
+            "Content-Disposition": f"attachment; filename=LMPC_Audit_Docket_{clean_pname}.json"
         }
     )

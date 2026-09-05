@@ -1,24 +1,36 @@
-# 🔍 LabelTruth — AI-Powered Misleading Food Packaging & Compliance Detector
+# 🔍 LabelTruth — AI-Powered Automated Legal Metrology & Packaging Compliance Enforcement System
 
+[![LMPC Compliance Engine](https://img.shields.io/badge/Legal%20Metrology-LMPC%20Rules%202011-blue)](https://consumeraffairs.nic.in/)
 [![FSSAI Compliance Engine](https://img.shields.io/badge/FSSAI-Sec%2023%20Enforcer-emerald)](https://www.fssai.gov.in/)
 [![FastAPI Backend](https://img.shields.io/badge/FastAPI-0.110-009688.svg)](https://fastapi.tiangolo.com)
 [![Flutter Mobile App](https://img.shields.io/badge/Flutter-3.x-02569B.svg)](https://flutter.dev)
 [![Render Ready](https://img.shields.io/badge/Render-Cloud%20Deploy-46E3B7.svg)](https://render.com)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Render%20Cloud-336791.svg)](https://postgresql.org)
 
-**LabelTruth** is a full-stack, production-ready mobile application and compliance engine designed to empower consumers and regulatory bodies by exposing misleading front-of-pack food marketing claims against empirical back-panel ingredient hierarchies and nutritional facts under **FSSAI** (Food Safety and Standards Authority of India) and **CCPA** (Central Consumer Protection Authority) regulations.
+**LabelTruth** is an enterprise-grade mobile and web compliance verification platform engineered for **Department of Consumer Affairs (DoCA) Legal Metrology Officers, Food Safety Officers (FSOs), and consumers** to automate packaging audits under the **Legal Metrology (Packaged Commodities) Rules, 2011 (LMPC Rules)** and **Food Safety and Standards Authority of India (FSSAI)** regulations.
 
 ---
 
 ## 🌟 Key Features
 
-- **📷 Dual-Camera Split Scan Flow**: Capture Front-of-Pack (marketing claims) and Back-of-Pack (ingredients and nutrition facts) in one synchronized audit session.
-- **🎯 Dynamic 0–100 Truth Score Gauge**: Animated radial sweep-gradient gauge computing compliance deductions in real-time.
-- **⚖️ Claim vs. Reality Comparative Cards**: Direct side-by-side contrast between marketing slogans and laboratory findings.
-- **🧪 3-Tier Ingredient Hierarchy**: Color-coded chips (🟢 Clean, 🟡 Warning / Refined Flour, 🔴 Harmful / Palm Oil / Synthetic Additives).
-- **📑 Statutory FSSAI Legal Notice (PDF)**: Generates print-ready formal consumer grievance notices for filing on CCPA & FSSAI FOSCOS portals.
-- **⚙️ Personal Dietary & Allergen Triggers**: Instant alerts for Palm Oil, Diabetic/Glycemic Index, Low Sodium, Strict Vegan verification, and 8+ major allergens.
-- **🧪 Preloaded Benchmark Test Suite**: Test immediate audit scenarios with 4 realistic benchmark market foods.
+- **📷 Dual-Camera Split Scan Flow**: Capture Front-of-Pack (marketing claims) and Back-of-Pack (statutory declarations & ingredients) in one synchronized audit session.
+- **⚖️ Automated LMPC Rule 6 Mandatory Declarations Audit**: 100% automated verification of all 7 statutory declaration fields:
+  1. *Rule 6(1)(a)*: Name & Address of Manufacturer / Packer / Importer.
+  2. *Rule 6(1)(b)*: Generic / Common Commodity Identity.
+  3. *Rule 6(1)(c)*: Standard Net Quantity in legal metric units (g, kg, ml, l).
+  4. *Rule 6(1)(d)*: Date of Manufacture / Packaging & Expiry.
+  5. *Rule 6(1)(e)*: Maximum Retail Price (MRP inclusive of all taxes).
+  6. *Rule 6(1)(g)*: Consumer Care / Grievance Redressal contact details.
+  7. *Rule 6(1)(h)*: Mandatory Unit Sale Price (USP per g/ml).
+- **📐 LMPC Rule 7 & Schedule-II Font Size & Readability Engine**: Deterministic mathematical check verifying that numeral and letter heights meet statutory thresholds based on Principal Display Panel (PDP) area and package weight.
+- **🎯 Dynamic 0–100 Truth Score Gauge**: Animated radial gauge computing compliance deductions in real-time.
+- **📊 Multi-Format Digital Compliance Reports**:
+  - 📄 **Statutory Violation Notice (PDF)**: Print-ready formal legal notice for CCPA / DoCA / FSSAI FOSCOS filings.
+  - 📊 **Editable Spreadsheet (CSV)**: Tabular format for officer inspection records.
+  - 🗂️ **Machine-Readable Audit Docket (JSON)**: Complete data payload for enforcement archives.
+- **🛡️ Role-Based Access Control (RBAC)**: Switch between **Enforcement Officer Mode (LMPC / FSSAI Inspector)** with badge credentials & jurisdiction tools, and **Consumer Advocate Mode**.
+- **📈 Enforcement & Inspection Monitoring Dashboard**: Live metrics for compliance rates, total inspections, violation category distribution, and enforcement notice readiness.
+- **💬 Interactive Regulatory AI Chatbot (`/chat/product`)**: Built-in conversational AI allowing officers and consumers to query specific legal thresholds and health impacts.
 
 ---
 
@@ -27,24 +39,25 @@
 ```mermaid
 flowchart TD
     subgraph Flutter_Mobile_App["📱 Flutter Mobile App (Riverpod + Dio)"]
-        UI_Home[🏠 HomeScreen & Live Search]
+        UI_Home[🏠 HomeScreen & Enforcement Dashboard]
         UI_DualCam[📷 Dual-Camera Mode: Front & Back Pack]
         UI_Gauge[🎯 Truth Score Gauge 0-100]
+        UI_LMPC[⚖️ LMPC Rule 6 Mandatory Checklist]
+        UI_Font[📐 Rule 7 Font Readability Gauge]
         UI_Cards[⚖️ Claim vs. Reality Breakdown Cards]
-        UI_Ing[🧪 3-Tier Ingredient Hierarchy Chips]
-        UI_PDF_Viewer[📄 FSSAI Statutory Complaint Notice]
-        UI_Alerts[⚙️ Personal Dietary Alert Triggers]
+        UI_Export[📄 Multi-Format Export: PDF / CSV / JSON]
+        UI_RBAC[🛡️ Role Switcher: Officer vs Citizen]
     end
 
     subgraph FastAPI_Backend["⚡ FastAPI Backend (Render Ready)"]
         API_Gateway[REST API Endpoints /api/v1/]
-        AI_Vision[👁️ OpenRouter Multimodal Vision Service]
-        Rule_Engine[⚖️ Deterministic FSSAI Compliance Engine]
-        PDF_Service[📑 ReportLab Statutory Legal Notice Generator]
+        AI_Vision[👁️ Multimodal Vision Service]
+        Rule_Engine[⚖️ Deterministic LMPC & FSSAI Rule Engine]
+        PDF_Service[📑 ReportLab PDF & CSV Generator]
     end
 
     subgraph Database_Layer["🐘 PostgreSQL Database (Render Hosted)"]
-        DB_Users[(users)]
+        DB_Users[(users with RBAC)]
         DB_Products[(products)]
         DB_Rules[(compliance_rules)]
         DB_Scans[(scan_history)]
@@ -52,29 +65,32 @@ flowchart TD
 
     UI_DualCam -->|Base64 Dual Images / Barcode| API_Gateway
     API_Gateway --> AI_Vision
-    AI_Vision -->|Structured Marketing & Ingredients| Rule_Engine
-    Rule_Engine -->|Truth Score, Verdict & Violations| API_Gateway
+    AI_Vision -->|Structured Declarations & Ingredients| Rule_Engine
+    Rule_Engine -->|Truth Score, LMPC Audit & Violations| API_Gateway
     API_Gateway --> PDF_Service
     API_Gateway --> DB_Products
     API_Gateway --> DB_Scans
     API_Gateway -->|Full Audit JSON| UI_Gauge
+    UI_Gauge --> UI_LMPC
+    UI_Gauge --> UI_Font
     UI_Gauge --> UI_Cards
-    UI_Gauge --> UI_Ing
-    UI_PDF_Viewer -->|Download PDF| PDF_Service
+    UI_Export -->|Download PDF/CSV/JSON| PDF_Service
 ```
 
 ---
 
-## ⚖️ FSSAI Regulatory Rules Enforced
+## ⚖️ Statutory Regulations & Rules Enforced
 
-| Rule ID | Violation Name | Regulation Reference | Detection Logic | Penalty |
+| Rule Code | Violation Name | Regulation Reference | Detection Logic | Penalty |
 | :--- | :--- | :--- | :--- | :--- |
-| **RULE_A** | **Zero Sugar Deception** | *FSSAI Claims & Adv. Reg. 2018 (Sec 5(2))* | "Zero Sugar" claim but contains Maltodextrin (GI 110), Invert Syrup, HFCS, Dextrose | **-30 (Critical)** |
-| **RULE_B** | **Grain Hierarchy Deception** | *FSSAI Labelling Reg. 2020 (Sec 23)* | "100% Atta / Whole Wheat" claim but Maida (Refined Flour) is #1 ingredient | **-25 (Critical)** |
+| **RULE_A** | **Zero Sugar Deception** | *FSSAI Claims Reg. 2018 (Sec 5(2))* | "Zero Sugar" claim but contains Maltodextrin (GI 110), Invert Syrup, HFCS, Dextrose | **-30 (Critical)** |
+| **RULE_B** | **Grain Hierarchy Inversion** | *FSSAI Labelling Reg. 2020 (Sec 23)* | "100% Whole Wheat" claim but Maida (Refined Flour) is #1 ingredient | **-25 (Critical)** |
 | **RULE_C** | **High Protein Shortfall** | *FSSAI Schedule-II (Nutrition Claims)* | "High Protein" claim but protein is < 12% total calories or < 10g/100g | **-15 (High)** |
 | **RULE_D** | **Palm Oil Masking** | *FSSAI Sec 2.2.2.5 (Vegetable Fat Specificity)* | Disguises refined palm oil / palmolein under generic "Edible Vegetable Oil" | **-20 (High)** |
 | **RULE_E** | **Toxic & Synthetic Additives** | *FSSAI Permitted Food Additives Tables* | Flags Caramel IV (INS 150d / 4-MEI), Sunset Yellow (INS 110), High Sucralose (INS 955) | **-10 to -15** |
-| **RULE_F** | **Sodium & Trans Fat Thresholds** | *FSSAI Nutritional Declaration Norms* | Flags trans fats > 0.2g or sodium > 400mg/100g | **-10 (Medium)** |
+| **RULE_F** | **HFSS Sodium & Fat Caps** | *FSSAI Labelling & Display Regulations 2020* | Flags trans fats > 0.2g or sodium > 400mg/100g | **-15 (High)** |
+| **RULE_G** | **LMPC Mandatory Declarations** | *LMPC Rules 2011 (Rule 6)* | Audits all 7 mandatory fields: Manufacturer, Generic Name, Net Qty, Dates, MRP, Care, USP | **-15 (High)** |
+| **RULE_H** | **Font Size & Readability** | *LMPC Rules 2011 (Rule 7 & Schedule-II)* | Checks minimum numeral height in mm against Principal Display Panel area bracket | **-15 (High)** |
 
 ---
 
@@ -83,15 +99,15 @@ flowchart TD
 ```
 ├── backend/                        # FastAPI Backend & Rule Engine
 │   ├── app/
-│   │   ├── api/v1/endpoints/       # REST Endpoints (analyze, products, scans, report, rules)
+│   │   ├── api/v1/endpoints/       # REST Endpoints (analyze, products, scans, report, users, rules)
 │   │   ├── core/                   # Database engine, CORS & Config loader
-│   │   ├── models/                 # SQLAlchemy ORM Models (User, Product, ScanHistory, Rule)
-│   │   ├── schemas/                # Pydantic Schemas & Validators
-│   │   └── services/               # AI Vision, Rule Engine & ReportLab PDF Generator
-│   ├── tests/                      # Automated PyTest test suite (5/5 Passing)
+│   │   ├── models/                 # SQLAlchemy ORM Models (User with RBAC, Product, ScanHistory)
+│   │   ├── schemas/                # Pydantic Schemas (LMPC Mandatory Declarations, Font Audit)
+│   │   └── services/               # AI Vision, Deterministic Rule Engine, ReportLab PDF & CSV
+│   ├── tests/                      # Automated PyTest test suite (7/7 Passing)
 │   ├── Dockerfile                  # Container definition for production deployment
 │   ├── render.yaml                 # Render Blueprint configuration
-│   ├── seed_data.py                # Database seeder with benchmark market foods
+│   ├── seed_data.py                # Database seeder with benchmark market foods & Officer profile
 │   ├── requirements.txt            # Python dependencies
 │   └── DEPLOY_RENDER.md            # Step-by-step Render deployment manual
 │
@@ -99,11 +115,11 @@ flowchart TD
 │   ├── lib/
 │   │   ├── core/constants/         # Color palettes & API endpoints
 │   │   ├── core/theme/             # Dark theme & Typography tokens
-│   │   ├── models/                 # Dart Data Models (ScanResult, ClaimComparison, etc.)
-│   │   ├── providers/              # Riverpod State Notifiers (Scan, Settings)
-│   │   ├── services/               # Dio HTTP client & fallback service
-│   │   ├── widgets/                # Truth Gauge, Claim Cards, Ingredient Chips, PDF modal
-│   │   └── screens/                # Home, Dual-Capture, Result, History, Settings
+│   │   ├── models/                 # Dart Data Models (ScanResult, LMPC Declarations, FontAudit)
+│   │   ├── providers/              # Riverpod State Notifiers (Scan, Settings with RBAC)
+│   │   ├── services/               # Dio HTTP client, TTS audio service
+│   │   ├── widgets/                # Truth Gauge, Claim Cards, Ingredient Chips, PDF/CSV modal
+│   │   └── screens/                # Home, Dual-Capture, Result, History, Settings (RBAC)
 │   └── test/                       # Flutter Widget & UI Smoke Tests (Passing)
 │
 └── .gitignore                      # Clean exclusion of build artifacts & cache

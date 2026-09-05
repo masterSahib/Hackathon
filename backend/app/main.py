@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.core.database import engine, Base
+from app.core.database import engine, Base, run_migrations
 from app.api.v1.router import api_router
 
-# Create database tables automatically
+# Create database tables & run migrations automatically
+run_migrations()
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(

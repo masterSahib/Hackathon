@@ -1,5 +1,5 @@
 import uuid
-from app.core.database import SessionLocal, engine, Base
+from app.core.database import SessionLocal, engine, Base, run_migrations
 from app.models.product import Product
 from app.models.compliance_rule import ComplianceRule
 from app.models.scan_history import ScanHistory
@@ -7,6 +7,7 @@ from app.models.user import User
 from app.services.rule_engine import rule_engine
 
 def seed_database():
+    run_migrations()
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
 
@@ -14,8 +15,13 @@ def seed_database():
     user = db.query(User).first()
     if not user:
         user = User(
-            name="Rahul Sharma",
-            email="rahul.sharma@example.com",
+            name="Officer Rajesh Verma",
+            email="rajesh.verma@doca.gov.in",
+            role="OFFICER",
+            badge_number="LMPC-NZ-2026-442",
+            jurisdiction="North Zone Enforcement Directorate, New Delhi",
+            department="Legal Metrology & Packaging Enforcement",
+            organization="Department of Consumer Affairs (DoCA)",
             dietary_preferences={
                 "allergies": ["Peanuts"],
                 "diabetic_mode": True,
@@ -28,6 +34,12 @@ def seed_database():
         db.add(user)
         db.commit()
         db.refresh(user)
+    else:
+        user.role = "OFFICER"
+        user.badge_number = "LMPC-NZ-2026-442"
+        user.department = "Legal Metrology & Packaging Enforcement"
+        user.organization = "Department of Consumer Affairs (DoCA)"
+        db.commit()
 
     # Seed Sample Products
     sample_products = [
@@ -43,6 +55,12 @@ def seed_database():
                 "No Artificial Colours"
             ],
             "raw_ingredients_text": "Refined Wheat Flour (Maida) 58%, Palm Oil, Invert Sugar Syrup, Maltodextrin, Whole Wheat Flour (Atta) 12%, Wheat Bran 4.5%, Raising Agents (INS 500ii, INS 503ii), Emulsifiers (INS 322), Caramel Color (INS 150d), Artificial Vanilla Flavour.",
+            "net_quantity_raw": "150 g",
+            "mrp_raw": "₹ 45.00 (incl. of all taxes)",
+            "usp_raw": "₹ 0.30 per g",
+            "mfg_date_raw": "MFD 06/2026",
+            "customer_care_raw": "Consumer Care: 1800-200-8899, care@nutriwhole.in",
+            "manufacturer_raw": "Manufactured by NutriWhole Foods Pvt Ltd, Plot 14, Industrial Estate, Bengaluru 560058, India",
             "nutrition_json": {
                 "energy_kcal": 472.0,
                 "protein_g": 6.2,
@@ -68,6 +86,12 @@ def seed_database():
                 "Enriched with Real Nuts"
             ],
             "raw_ingredients_text": "Liquid Glucose, Invert Sugar Syrup, Soy Protein Crispies 8%, Maltodextrin, Palmolein, Milk Chocolate Coating, Sucralose (INS 955), Preservative (INS 211), Synthetic Chocolate Aroma.",
+            "net_quantity_raw": "50 g",
+            "mrp_raw": "₹ 80.00 (incl. of all taxes)",
+            "usp_raw": "₹ 1.60 per g",
+            "mfg_date_raw": "PKD 05/2026",
+            "customer_care_raw": "Care: fitpower@nutrition.in | +91-98765-43210",
+            "manufacturer_raw": "FitPower Nutra Labs, Sector 62, Noida 201309, India",
             "nutrition_json": {
                 "energy_kcal": 410.0,
                 "protein_g": 7.5,
@@ -93,6 +117,12 @@ def seed_database():
                 "Natural Taste of Real Mangoes"
             ],
             "raw_ingredients_text": "Water, Mango Pulp 18%, Sugar, Acidity Regulator (INS 330), Antioxidant (INS 300), Synthetic Food Color (INS 110 Sunset Yellow), Preservative (INS 211 Sodium Benzoate).",
+            "net_quantity_raw": "200 ml",
+            "mrp_raw": "₹ 35.00 (incl. of all taxes)",
+            "usp_raw": "₹ 0.175 per ml",
+            "mfg_date_raw": "MFD 07/2026",
+            "customer_care_raw": "Grievance Officer: support@pureorchard.com",
+            "manufacturer_raw": "PureOrchard Agro Pvt Ltd, Ratnagiri, Maharashtra 415612, India",
             "nutrition_json": {
                 "energy_kcal": 68.0,
                 "protein_g": 0.3,
@@ -118,6 +148,12 @@ def seed_database():
                 "No Artificial Additives"
             ],
             "raw_ingredients_text": "Whole Rolled Oats Flour 72%, Cold Pressed Virgin Coconut Oil 14%, Chia Seeds 6%, Pumpkin Seeds 5%, Rock Salt 2%, Rosemary Extract 1%.",
+            "net_quantity_raw": "100 g",
+            "mrp_raw": "₹ 120.00 (incl. of all taxes)",
+            "usp_raw": "₹ 1.20 per g",
+            "mfg_date_raw": "PKD 08/2026",
+            "customer_care_raw": "Helpline: 1800-444-1234, hello@cleanoats.org",
+            "manufacturer_raw": "CleanOats Bio Farm, Ooty Valley, Tamil Nadu 643001, India",
             "nutrition_json": {
                 "energy_kcal": 435.0,
                 "protein_g": 14.2,
@@ -143,15 +179,18 @@ def seed_database():
             ingredients_list=ing_items,
             nutrition=p_data["nutrition_json"],
             raw_ingredients_text=p_data["raw_ingredients_text"],
-            product_category=p_data["category"]
+            product_category=p_data["category"],
+            brand_name=p_data["brand_name"],
+            product_name=p_data["product_name"],
+            extra_fields=p_data
         )
 
-        if not existing:
-            violations_json = [v.model_dump() if hasattr(v, "model_dump") else v.dict() for v in eval_result["violations"]]
-            alternatives_json = [a.model_dump() if hasattr(a, "model_dump") else a.dict() for a in eval_result["healthier_alternatives"]]
-            comparisons_json = [c.model_dump() if hasattr(c, "model_dump") else c.dict() for c in eval_result["claim_comparisons"]]
-            ingredients_json = [i.model_dump() if hasattr(i, "model_dump") else i.dict() for i in eval_result["ingredients"]]
+        violations_json = [v.model_dump() if hasattr(v, "model_dump") else v.dict() for v in eval_result["violations"]]
+        alternatives_json = [a.model_dump() if hasattr(a, "model_dump") else a.dict() for a in eval_result["healthier_alternatives"]]
+        comparisons_json = [c.model_dump() if hasattr(c, "model_dump") else c.dict() for c in eval_result["claim_comparisons"]]
+        ingredients_json = [i.model_dump() if hasattr(i, "model_dump") else i.dict() for i in eval_result["ingredients"]]
 
+        if not existing:
             prod = Product(
                 barcode=p_data["barcode"],
                 brand_name=p_data["brand_name"],
@@ -184,6 +223,13 @@ def seed_database():
             db.add(scan)
             db.commit()
             print(f"Seeded product: {prod.product_name} (Truth Score: {prod.truth_score})", flush=True)
+        else:
+            existing.truth_score = eval_result["truth_score"]
+            existing.verdict = eval_result["verdict"]
+            existing.violations_summary = violations_json
+            existing.alternatives = alternatives_json
+            db.commit()
+            print(f"Updated product: {existing.product_name} (Truth Score: {existing.truth_score})", flush=True)
 
     db.close()
     print("Database seeding completed successfully!", flush=True)

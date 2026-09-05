@@ -40,7 +40,7 @@ class ViolationItem(BaseModel):
     rule_code: str
     title: str
     severity: str  # Low, Medium, High, Critical
-    regulation_reference: str  # e.g., "FSSAI Packaging and Labelling Reg. 2020 Sec 23"
+    regulation_reference: str  # e.g., "Legal Metrology (Packaged Commodities) Rules 2011 Rule 6(1)"
     claim_text: str
     audit_finding: str
     recommendation: str
@@ -51,6 +51,33 @@ class AlternativeProduct(BaseModel):
     truth_score: int
     why_better: str
 
+class MandatoryDeclarationItem(BaseModel):
+    declaration_key: str  # e.g., "manufacturer_address", "generic_name", "net_quantity", "mfg_date", "mrp", "consumer_care", "unit_sale_price"
+    rule_clause: str      # e.g., "Rule 6(1)(a)", "Rule 6(1)(b)", etc.
+    title: str            # e.g., "Name and Complete Address of Manufacturer / Packer"
+    is_present: bool = False
+    extracted_text: Optional[str] = None
+    is_compliant: bool = True
+    legal_defect: Optional[str] = None
+    statutory_reference: str = "Legal Metrology (Packaged Commodities) Rules, 2011"
+
+class MandatoryDeclarationsAudit(BaseModel):
+    total_declarations: int = 7
+    passed_count: int = 0
+    failed_count: int = 0
+    compliance_percentage: float = 100.0
+    items: List[MandatoryDeclarationItem] = []
+
+class FontReadabilityAudit(BaseModel):
+    pdp_area_sq_cm: float = 120.0
+    net_quantity_bracket: str = "50g to 200g"
+    min_required_font_height_mm: float = 2.0
+    detected_font_height_mm: float = 2.5
+    is_font_compliant: bool = True
+    readability_score: int = 90  # 0 to 100
+    contrast_ratio: str = "High Contrast (Black text on white panel)"
+    remarks: str = "Conforms to LMPC Rule 7 & Schedule-II minimum numeral height requirements."
+
 class AnalysisRequest(BaseModel):
     barcode: Optional[str] = None
     brand_name: Optional[str] = None
@@ -60,6 +87,12 @@ class AnalysisRequest(BaseModel):
     raw_marketing_text: Optional[str] = None
     raw_ingredients_text: Optional[str] = None
     raw_nutrition_text: Optional[str] = None
+    net_quantity_raw: Optional[str] = None
+    mrp_raw: Optional[str] = None
+    usp_raw: Optional[str] = None
+    mfg_date_raw: Optional[str] = None
+    customer_care_raw: Optional[str] = None
+    manufacturer_raw: Optional[str] = None
     user_dietary_preferences: Optional[Dict[str, Any]] = None
 
 class AnalysisResponse(BaseModel):
@@ -79,5 +112,7 @@ class AnalysisResponse(BaseModel):
     nutrition_per_100g: NutritionPer100g
     dietary_warnings: List[str] = []
     healthier_alternatives: List[AlternativeProduct] = []
+    mandatory_declarations: Optional[MandatoryDeclarationsAudit] = None
+    font_readability: Optional[FontReadabilityAudit] = None
     pdf_report_available: bool = True
     created_at: datetime

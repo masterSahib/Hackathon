@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/constants/app_colors.dart';
 import '../models/scan_result.dart';
 import '../providers/scan_provider.dart';
+import '../providers/settings_provider.dart';
 import 'capture_screen.dart';
 import 'barcode_scan_screen.dart';
 import 'result_screen.dart';
@@ -63,6 +64,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final scanState = ref.watch(scanProvider);
+    final settings = ref.watch(settingsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -102,6 +104,38 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
         actions: [
+          // Officer Mode Pill Badge
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: settings.isOfficerMode ? AppColors.accent.withOpacity(0.18) : Colors.grey.withOpacity(0.18),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: settings.isOfficerMode ? AppColors.accent : Colors.grey,
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  settings.isOfficerMode ? Icons.shield_rounded : Icons.person_rounded,
+                  size: 13,
+                  color: settings.isOfficerMode ? AppColors.accent : Colors.grey,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  settings.isOfficerMode ? "OFFICER" : "CITIZEN",
+                  style: GoogleFonts.poppins(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: settings.isOfficerMode ? AppColors.accent : Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.qr_code_scanner, color: AppColors.accent),
             tooltip: "Scan Barcode",
@@ -124,7 +158,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ],
       ),
       body: scanState.isLoading
-          ? _buildLoadingOverlay(scanState.loadingMessage ?? "Auditing Product...")
+          ? _buildLoadingOverlay(scanState.loadingMessage ?? "Auditing Packaging...")
           : RefreshIndicator(
               onRefresh: () async {
                 await ref.read(scanProvider.notifier).loadRecentScans();
@@ -136,7 +170,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Hero Scanner Banner
-                    _buildHeroBanner(context),
+                    _buildHeroBanner(context, settings.isOfficerMode),
+                    const SizedBox(height: 16),
+
+                    // Enforcement Monitoring Dashboard Summary
+                    _buildEnforcementDashboardSummary(scanState.recentScans),
                     const SizedBox(height: 18),
 
                     // Search / Barcode Bar
@@ -152,7 +190,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          "Recent Food Audits",
+                          "Recent Inspection Audits",
                           style: GoogleFonts.poppins(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
@@ -183,7 +221,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     _buildRecentScansList(scanState.recentScans),
                     const SizedBox(height: 24),
 
-                    // FSSAI Compliance Educational Guide
+                    // FSSAI & LMPC Compliance Educational Guide
                     _buildComplianceGuideSection(),
                     const SizedBox(height: 30),
                   ],
@@ -260,7 +298,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            "Querying FSSAI regulations & Open Food Facts...",
+            "Auditing LMPC Rule 6 declarations & FSSAI standards...",
             style: GoogleFonts.inter(
               fontSize: 12,
               color: AppColors.textMutedDark,
@@ -271,7 +309,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildHeroBanner(BuildContext context) {
+  Widget _buildHeroBanner(BuildContext context, bool isOfficer) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -296,7 +334,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  "AI VISION AUDIT",
+                  isOfficer ? "OFFICER ENFORCEMENT" : "AI PACKAGING AUDITOR",
                   style: GoogleFonts.poppins(
                     fontSize: 9,
                     fontWeight: FontWeight.w800,
@@ -306,7 +344,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                "FSSAI Sec 23 Enforcer",
+                "LMPC Rules 2011 & FSSAI Enforcer",
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   color: AppColors.accent,
@@ -317,7 +355,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const SizedBox(height: 10),
           Text(
-            "Expose Misleading\nFood Packaging Claims",
+            isOfficer
+                ? "Automated Packaging\nCompliance Enforcement"
+                : "Expose Misleading\nFood Packaging Claims",
             style: GoogleFonts.poppins(
               fontSize: 20,
               fontWeight: FontWeight.w800,
@@ -327,7 +367,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            "Cross-examine marketing slogans with real back-panel ingredients & Indian FSSAI standards.",
+            isOfficer
+                ? "Verify mandatory LMPC declarations, font area thresholds & issue statutory violation notices."
+                : "Cross-examine marketing slogans with real back-panel ingredients & Indian FSSAI standards.",
             style: GoogleFonts.inter(
               fontSize: 12,
               color: const Color(0xFFD1FAE5),
@@ -381,6 +423,79 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildEnforcementDashboardSummary(List<RecentScanItem> scans) {
+    final total = scans.length;
+    final verified = scans.where((s) => s.verdict == "Verified").length;
+    final violations = scans.where((s) => s.verdict != "Verified").length;
+    final rate = total > 0 ? ((verified / total) * 100).toInt() : 100;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceCardDark,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.surfaceLightDark),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Enforcement Dashboard Overview",
+                style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textPrimaryDark),
+              ),
+              Text(
+                "Live Metrics",
+                style: GoogleFonts.inter(fontSize: 10.5, fontWeight: FontWeight.w600, color: AppColors.accent),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _buildMetricTile("Total Audited", "$total", AppColors.textPrimaryDark, Icons.inventory_2_outlined),
+              const SizedBox(width: 8),
+              _buildMetricTile("Compliance Rate", "$rate%", AppColors.truthGreen, Icons.check_circle_outline),
+              const SizedBox(width: 8),
+              _buildMetricTile("Defects / Notices", "$violations", AppColors.criticalRed, Icons.gavel_outlined),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricTile(String label, String value, Color color, IconData icon) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceLightDark.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w800, color: color),
+            ),
+            Text(
+              label,
+              style: GoogleFonts.inter(fontSize: 9.5, color: AppColors.textMutedDark),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -453,11 +568,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Dual-Pack Cam",
+                          "Dual-Pack Snap",
                           style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700),
                         ),
                         Text(
-                          "Vision AI Scan",
+                          "Front + Back Panel",
                           style: GoogleFonts.inter(fontSize: 10, color: AppColors.textMutedDark),
                         ),
                       ],
@@ -490,10 +605,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.warningAmber.withOpacity(0.15),
+                      color: AppColors.truthGreen.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.qr_code_scanner_rounded, color: AppColors.warningAmber, size: 20),
+                    child: const Icon(Icons.qr_code_scanner, color: AppColors.truthGreen, size: 20),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -501,11 +616,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Scan Barcode",
+                          "Barcode Scanner",
                           style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700),
                         ),
                         Text(
-                          "Live Registry",
+                          "Instant Registry DB",
                           style: GoogleFonts.inter(fontSize: 10, color: AppColors.textMutedDark),
                         ),
                       ],
@@ -527,18 +642,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: AppColors.surfaceCardDark,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.surfaceLightDark),
         ),
         child: Column(
           children: [
-            const Icon(Icons.inventory_2_outlined, color: AppColors.textMutedDark, size: 36),
+            const Icon(Icons.qr_code_2_rounded, size: 36, color: AppColors.textMutedDark),
             const SizedBox(height: 8),
             Text(
-              "No scans yet",
+              "No audits yet",
               style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
             ),
             Text(
-              "Scan a food package or barcode to see the Truth Score & FSSAI violations here.",
+              "Scan packaging with dual camera or barcode to start.",
               style: GoogleFonts.inter(fontSize: 11, color: AppColors.textMutedDark),
               textAlign: TextAlign.center,
             ),
@@ -547,222 +663,176 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     }
 
-    return SizedBox(
-      height: 155,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: scans.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemBuilder: (context, index) {
-          final item = scans[index];
-          final scoreColor = AppColors.getScoreColor(item.truthScore);
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: scans.take(4).length,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        final item = scans[index];
+        final scoreColor = AppColors.getScoreColor(item.truthScore);
 
-          return InkWell(
-            onTap: () async {
-              showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (_) => const Center(
-                  child: CircularProgressIndicator(color: AppColors.accent),
-                ),
+        return InkWell(
+          onTap: () async {
+            final scanNotifier = ref.read(scanProvider.notifier);
+            final fullResult = await scanNotifier.loadScanById(item.id);
+            if (fullResult != null && mounted) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => ResultScreen(result: fullResult)),
               );
-
-              final scanNotifier = ref.read(scanProvider.notifier);
-              final res = await scanNotifier.loadScanById(item.id, productId: item.productId);
-
-              if (context.mounted) {
-                Navigator.of(context, rootNavigator: true).pop(); // dismiss loading dialog
-                if (res != null) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => ResultScreen(result: res)),
-                  );
-                } else {
-                  final error = ref.read(scanProvider).errorMessage ?? "Unable to load audit report. Please scan again.";
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(error),
-                      backgroundColor: AppColors.criticalRed,
-                    ),
-                  );
-                }
-              }
-            },
-            borderRadius: BorderRadius.circular(14),
-            child: Container(
-              width: 230,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceCardDark,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.surfaceLightDark, width: 0.8),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: scoreColor.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: scoreColor.withOpacity(0.4)),
-                        ),
-                        child: Text(
-                          "${item.truthScore} / 100",
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            color: scoreColor,
-                          ),
-                        ),
-                      ),
-                      Icon(
-                        item.truthScore >= 80 ? Icons.check_circle : Icons.warning_amber_rounded,
-                        color: scoreColor,
-                        size: 16,
-                      ),
-                    ],
+            }
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceCardDark,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.surfaceLightDark),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: scoreColor.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: scoreColor.withOpacity(0.4)),
                   ),
-                  Column(
+                  child: Center(
+                    child: Text(
+                      "${item.truthScore}",
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: scoreColor,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         item.productName,
                         style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
                           color: AppColors.textPrimaryDark,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        item.brandName,
-                        style: GoogleFonts.inter(
-                          fontSize: 10,
-                          color: AppColors.textMutedDark,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          "${item.violationsCount} Violations",
-                          style: GoogleFonts.inter(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: item.violationsCount > 0 ? AppColors.criticalRed : AppColors.truthGreen,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
                       Text(
-                        item.verdict,
-                        style: GoogleFonts.poppins(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: scoreColor,
-                        ),
+                        item.brandName,
+                        style: GoogleFonts.inter(fontSize: 11, color: AppColors.textMutedDark),
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: scoreColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    item.verdict,
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: scoreColor,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildComplianceGuideSection() {
-    final guides = [
-      {
-        "title": "Rule A: Zero Sugar Trap",
-        "desc": "Brands hide maltodextrin (GI 110) and invert syrups under 'No Added Sugar'.",
-        "icon": Icons.water_drop_outlined,
-      },
-      {
-        "title": "Rule B: 100% Atta Inversion",
-        "desc": "Maida listed before whole wheat violates mandatory ingredient hierarchy.",
-        "icon": Icons.grain_outlined,
-      },
-      {
-        "title": "Rule D: Palm Oil Masking",
-        "desc": "FSSAI Section 2.2.2.5 requires explicit declaration of vegetable fat sources.",
-        "icon": Icons.oil_barrel_outlined,
-      },
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Know Your Consumer Rights (FSSAI)",
-          style: GoogleFonts.poppins(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimaryDark,
-          ),
-        ),
-        const SizedBox(height: 10),
-        ...guides.map((g) => Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceCardDark,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.surfaceLightDark, width: 0.8),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceCardDark,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.surfaceLightDark),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.menu_book_rounded, color: AppColors.accent, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                "Legal Metrology & FSSAI Standards Enforced",
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimaryDark,
+                ),
               ),
-              child: Row(
+            ],
+          ),
+          const SizedBox(height: 10),
+          _buildGuideBullet("LMPC Rule 6", "Mandatory Net Quantity, USP, MRP, Dates & Grievance Contact"),
+          _buildGuideBullet("LMPC Rule 7 & 9", "Principal Display Panel font size & numeral area ratio check"),
+          _buildGuideBullet("FSSAI Sec 23", "Atta grain hierarchy & Zero Sugar maltodextrin verification"),
+          _buildGuideBullet("FSSAI HFSS", "Caps high sodium (>400mg) and saturated fats (>6g/100g)"),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGuideBullet(String rule, String desc) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(top: 4),
+            width: 5,
+            height: 5,
+            decoration: const BoxDecoration(
+              color: AppColors.accent,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceDark,
-                      borderRadius: BorderRadius.circular(8),
+                  TextSpan(
+                    text: "$rule: ",
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimaryDark,
                     ),
-                    child: Icon(g["icon"] as IconData, color: AppColors.accent, size: 20),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          g["title"] as String,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimaryDark,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          g["desc"] as String,
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
-                            color: AppColors.textSecondaryDark,
-                          ),
-                        ),
-                      ],
+                  TextSpan(
+                    text: desc,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: AppColors.textSecondaryDark,
                     ),
                   ),
                 ],
               ),
-            )),
-      ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

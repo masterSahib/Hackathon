@@ -19,8 +19,8 @@ async def analyze_food_packaging(
     db: Session = Depends(get_db)
 ):
     """Primary Multimodal Vision & Compliance Analysis Pipeline.
-    Accepts front/back images (base64) or transcribed text, extracts claims/nutrition,
-    runs deterministic FSSAI compliance rules, and persists to PostgreSQL.
+    Accepts front/back images (base64) or transcribed text, extracts claims/nutrition/LMPC declarations,
+    runs deterministic Legal Metrology & FSSAI compliance rules, and persists to PostgreSQL.
     """
     # 1. Check if barcode already exists in DB cache
     if request.barcode:
@@ -39,14 +39,24 @@ async def analyze_food_packaging(
             db.commit()
             db.refresh(scan)
 
-            # Evaluate with user dietary preferences
+            # Evaluate with user dietary preferences & LMPC
             eval_result = rule_engine.evaluate_compliance(
                 marketing_claims=cached_product.marketing_claims or [],
                 ingredients_list=[{"name": i} for i in (cached_product.raw_ingredients_text or "").split(", ")],
                 nutrition=cached_product.nutrition_json or {},
                 raw_ingredients_text=cached_product.raw_ingredients_text or "",
                 user_preferences=request.user_dietary_preferences or {},
-                product_category=cached_product.category or "Food"
+                product_category=cached_product.category or "Food",
+                brand_name=cached_product.brand_name,
+                product_name=cached_product.product_name,
+                extra_fields={
+                    "net_quantity_raw": request.net_quantity_raw,
+                    "mrp_raw": request.mrp_raw,
+                    "usp_raw": request.usp_raw,
+                    "mfg_date_raw": request.mfg_date_raw,
+                    "customer_care_raw": request.customer_care_raw,
+                    "manufacturer_raw": request.manufacturer_raw,
+                }
             )
 
             return AnalysisResponse(
@@ -66,6 +76,8 @@ async def analyze_food_packaging(
                 nutrition_per_100g=eval_result["nutrition_per_100g"],
                 dietary_warnings=eval_result["dietary_warnings"],
                 healthier_alternatives=eval_result["healthier_alternatives"],
+                mandatory_declarations=eval_result["mandatory_declarations"],
+                font_readability=eval_result["font_readability"],
                 pdf_report_available=True,
                 created_at=scan.created_at,
             )
@@ -79,6 +91,12 @@ async def analyze_food_packaging(
         raw_nutrition_text=request.raw_nutrition_text,
         product_name_hint=request.product_name,
         brand_name_hint=request.brand_name,
+        net_quantity_hint=request.net_quantity_raw,
+        mrp_hint=request.mrp_raw,
+        usp_hint=request.usp_raw,
+        mfg_date_hint=request.mfg_date_raw,
+        customer_care_hint=request.customer_care_raw,
+        manufacturer_hint=request.manufacturer_raw,
     )
 
     brand_name = extracted.get("brand_name") or request.brand_name or "Brand"
@@ -96,7 +114,18 @@ async def analyze_food_packaging(
         nutrition=nutrition,
         raw_ingredients_text=raw_ingredients_text,
         user_preferences=request.user_dietary_preferences or {},
-        product_category=category
+        product_category=category,
+        brand_name=brand_name,
+        product_name=product_name,
+        extra_fields={
+            **extracted,
+            "net_quantity_raw": request.net_quantity_raw or extracted.get("net_quantity_raw"),
+            "mrp_raw": request.mrp_raw or extracted.get("mrp_raw"),
+            "usp_raw": request.usp_raw or extracted.get("usp_raw"),
+            "mfg_date_raw": request.mfg_date_raw or extracted.get("mfg_date_raw"),
+            "customer_care_raw": request.customer_care_raw or extracted.get("customer_care_raw"),
+            "manufacturer_raw": request.manufacturer_raw or extracted.get("manufacturer_raw"),
+        }
     )
 
     # 4. Upsert Product in PostgreSQL Database
@@ -163,6 +192,8 @@ async def analyze_food_packaging(
         nutrition_per_100g=eval_result["nutrition_per_100g"],
         dietary_warnings=eval_result["dietary_warnings"],
         healthier_alternatives=eval_result["healthier_alternatives"],
+        mandatory_declarations=eval_result["mandatory_declarations"],
+        font_readability=eval_result["font_readability"],
         pdf_report_available=True,
         created_at=scan.created_at,
     )
@@ -176,6 +207,9 @@ async def upload_and_analyze_scan(
     product_name: Optional[str] = Form(None),
     raw_marketing_text: Optional[str] = Form(None),
     raw_ingredients_text: Optional[str] = Form(None),
+    net_quantity: Optional[str] = Form(None),
+    mrp: Optional[str] = Form(None),
+    usp: Optional[str] = Form(None),
     db: Session = Depends(get_db)
 ):
     """Accepts multipart/form-data upload for front and back packaging camera photos."""
@@ -198,6 +232,9 @@ async def upload_and_analyze_scan(
         back_image_base64=back_b64,
         raw_marketing_text=raw_marketing_text,
         raw_ingredients_text=raw_ingredients_text,
+        net_quantity_raw=net_quantity,
+        mrp_raw=mrp,
+        usp_raw=usp,
     )
 
     return await analyze_food_packaging(req, db)

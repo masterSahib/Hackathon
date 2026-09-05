@@ -19,7 +19,7 @@ void main() {
 
     // Verify HomeScreen is rendered
     expect(find.byType(HomeScreen), findsOneWidget);
-    expect(find.text("Recent Food Audits"), findsOneWidget);
+    expect(find.text("Recent Inspection Audits"), findsOneWidget);
     expect(find.text("Audit Packaging"), findsOneWidget);
   });
 }
